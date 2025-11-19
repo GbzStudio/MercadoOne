@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MercadoOne - Dark Marketplace (Firebase)</title>
+  <style>
+    :root{--bg:#0b0f12;--card:#0f1720;--muted:#9aa4b2;--accent:#7c3aed}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,#071017 0%,#09121a 100%);color:#e6eef6}
+    .container{max-width:1100px;margin:32px auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#4f46e5);display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{margin:0;font-size:20px}
+    p.subtitle{margin:0;color:var(--muted);font-size:13px}
+    .actions{display:flex;gap:8px;align-items:center}
+    .btn{background:var(--accent);border:none;padding:8px 12px;border-radius:10px;color:white;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .search{display:flex;align-items:center;background:#071622;border-radius:999px;padding:6px 10px;gap:8px;width:420px}
+    .search input{background:transparent;border:0;color:inherit;outline:0;width:100%}
+
+    main{margin-top:18px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);display:flex;flex-direction:column}
+    .thumb{height:160px;border-radius:8px;background:linear-gradient(180deg,#0b1116,#061018);display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden}
+    .meta{margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+    .price{color:var(--accent);font-weight:700}
+    .seller{color:var(--muted);font-size:12px}
+    .card .actions{margin-top:10px;display:flex;gap:8px}
+
+    .floating{position:fixed;right:22px;bottom:22px}
+
+    /* modal */
+    .modal-back{position:fixed;inset:0;background:rgba(2,6,23,0.7);display:flex;align-items:center;justify-content:center}
+    .modal{width:100%;max-width:680px;background:#071018;padding:18px;border-radius:12px}
+    label{display:block;font-size:13px;margin-top:8px;color:var(--muted)}
+    input[type=text],input[type=number],textarea{width:100%;background:#071622;border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:8px;color:inherit}
+    textarea{min-height:96px}
+
+    footer{margin-top:28px;text-align:center;color:var(--muted);font-size:13px}
+
+    .topbar-auth{display:flex;gap:8px;align-items:center}
+    .small{font-size:12px;color:var(--muted)}
+
+    /* responsive */
+    @media (max-width:600px){.search{width:100%}.brand h1{font-size:16px}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">M</div>
+        <div>
+          <h1>MercadoOne</h1>
+          <p class="subtitle">Venda e compre direto — dark UI • Firebase</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="search" role="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M21 21l-4.35-4.35" stroke="#9aa4b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="#9aa4b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <input id="search" placeholder="Procurar produto, vendedor..." />
+        </div>
+
+        <div class="topbar-auth">
+          <div id="userBox" class="small">Não está logado</div>
+          <button id="btnLoginGoogle" class="btn">Entrar com Google</button>
+          <button id="btnOpenSell" class="btn ghost">Vender</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="productGrid" class="grid"></section>
+      <div id="loading" class="small">Carregando produtos...</div>
+    </main>
+
+    <footer>Feito com ❤️ • MercadoOne • Firebase</footer>
+  </div>
+
+  <div class="floating">
+    <button id="btnAuthEmail" class="btn">Login / Registrar (email)</button>
+  </div>
+
+  <!-- Modais -->
+  <template id="modalSell">
+    <div class="modal-back">
+      <div class="modal">
+        <h3>Vender um produto</h3>
+        <form id="sellForm">
+          <label>Título</label>
+          <input name="title" required />
+          <label>Descrição</label>
+          <textarea name="description" required></textarea>
+          <label>Preço (R$)</label>
+          <input name="price" type="number" step="0.01" required />
+          <label>Contato (email ou telefone)</label>
+          <input name="contact" required />
+          <label>Imagem (opcional)</label>
+          <input name="image" type="file" accept="image/*" />
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+            <button type="button" id="btnCloseSell" class="btn ghost">Cancelar</button>
+            <button type="submit" class="btn">Publicar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </template>
+
+  <template id="modalAuthEmail">
+    <div class="modal-back">
+      <div class="modal">
+        <h3>Entrar / Registrar (email)</h3>
+        <form id="emailForm">
+          <label>Email</label>
+          <input name="email" type="text" required />
+          <label>Senha</label>
+          <input name="password" type="password" required />
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+            <button type="button" id="btnCloseEmail" class="btn ghost">Fechar</button>
+            <button type="submit" name="action" value="login" class="btn">Entrar</button>
+            <button type="submit" name="action" value="register" class="btn">Registrar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </template>
+
+  <!-- Firebase CDN compat (usamos compat para simplificar exemplos em um único arquivo) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+
+  <script>
+    /***** CONFIGURAÇÃO: cole seu firebaseConfig exatamente como você enviou *****/
+    const firebaseConfig = {
+      apiKey: "AIzaSyDUextNAsgjKWMBgvZRgpD-ZBMowtyA5g8",
+      authDomain: "mercadoone-256a8.firebaseapp.com",
+      databaseURL: "https://mercadoone-256a8-default-rtdb.firebaseio.com",
+      projectId: "mercadoone-256a8",
+      storageBucket: "mercadoone-256a8.firebasestorage.app",
+      messagingSenderId: "491377689826",
+      appId: "1:491377689826:web:2c5dd9eb5f86b0b424cabb"
+    };
+
+    // Inicializa
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+    const storage = firebase.storage();
+
+    // Observador de autenticação
+    const userBox = document.getElementById('userBox');
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        userBox.textContent = user.displayName || user.email;
+      } else {
+        userBox.textContent = 'Não está logado';
+      }
+    });
+
+    // --------- LOGIN GOOGLE ----------
+    const btnGoogle = document.getElementById('btnLoginGoogle');
+    // Observação: para usar Google sign-in, configure o OAuth Client ID no Firebase Console -> Auth -> Sign-in method -> Google
+    // Você forneceu este client ID: 491377689826-2cdt9oso75th14msjtlt6veu8k0g1ql6.apps.googleusercontent.com
+    // Adicione-o no console do Firebase para evitar problemas.
+
+    btnGoogle.addEventListener('click', async ()=>{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try{
+        await auth.signInWithPopup(provider);
+      }catch(e){
+        alert('Erro no login Google: '+e.message);
+      }
+    });
+
+    // --------- CRUD Produtos (Realtime DB) ----------
+    const productGrid = document.getElementById('productGrid');
+    const loading = document.getElementById('loading');
+
+    function renderProducts(list){
+      productGrid.innerHTML='';
+      if(!list||Object.keys(list).length===0){
+        loading.textContent='Nenhum produto disponível.';return;
+      }
+      loading.textContent='';
+      const arr = Object.entries(list).sort((a,b)=> b[1].createdAt - a[1].createdAt);
+      arr.forEach(([id, p]) =>{
+        const card = document.createElement('div');card.className='card';
+        const thumb = document.createElement('div');thumb.className='thumb';
+        if(p.imagePath){
+          const img = document.createElement('img');img.style.width='100%';img.style.height='100%';img.style.objectFit='cover';
+          storage.ref(p.imagePath).getDownloadURL().then(url=>img.src=url).catch(()=>thumb.textContent='Sem imagem');
+          thumb.appendChild(img);
+        } else { thumb.textContent='Sem imagem'; }
+        card.appendChild(thumb);
+
+        const title = document.createElement('div');title.style.marginTop='10px';title.innerHTML=`<strong>${escapeHtml(p.title)}</strong><div class='small' style='margin-top:6px;color:var(--muted)'>${escapeHtml(p.description)}</div>`;
+        card.appendChild(title);
+
+        const meta = document.createElement('div');meta.className='meta';
+        meta.innerHTML = `<div><div class='price'>R$ ${Number(p.price).toFixed(2)}</div><div class='seller'>${escapeHtml(p.sellerName)}</div></div>`;
+
+        const actions = document.createElement('div');actions.className='actions';
+        const btnContact = document.createElement('button');btnContact.className='btn ghost';btnContact.textContent='Contato';
+        btnContact.addEventListener('click',()=>{ alert('Contato do vendedor: '+p.sellerContact); });
+        const btnBuy = document.createElement('button');btnBuy.className='btn';btnBuy.textContent = p.isSold ? 'Vendido' : 'Comprar';
+        btnBuy.disabled = p.isSold;
+        btnBuy.addEventListener('click', ()=>{ markSold(id); });
+        actions.appendChild(btnContact);actions.appendChild(btnBuy);
+
+        meta.appendChild(actions);
+        card.appendChild(meta);
+        productGrid.appendChild(card);
+      });
+    }
+
+    // Escuta realtime
+    const productsRef = db.ref('products');
+    productsRef.on('value', snapshot=>{
+      renderProducts(snapshot.val());
+    });
+
+    // Marcar vendido (simulado)
+    function markSold(id){
+      if(!confirm('Marcar este produto como vendido?')) return;
+      db.ref('products/'+id).update({isSold:true});
+      alert('Produto marcado como vendido. Entre em contato com o vendedor para finalizar pagamento.');
+    }
+
+    // ====== SELL MODAL ======
+    const btnOpenSell = document.getElementById('btnOpenSell');
+    btnOpenSell.addEventListener('click', ()=>openSellModal());
+
+    function openSellModal(){
+      if(!auth.currentUser){ if(!confirm('Você precisa entrar para publicar. Entrar agora?')) return; else btnAuthEmail.click(); }
+      const tpl = document.getElementById('modalSell');
+      const node = tpl.content.cloneNode(true); document.body.appendChild(node);
+      const back = document.querySelector('.modal-back');
+      document.getElementById('btnCloseSell').addEventListener('click', ()=>back.remove());
+      const form = document.getElementById('sellForm');
+      form.addEventListener('submit', async (ev)=>{
+        ev.preventDefault();
+        const fd = new FormData(form);
+        const title = fd.get('title');
+        const description = fd.get('description');
+        const price = Number(fd.get('price'))||0;
+        const contact = fd.get('contact');
+        const file = fd.get('image');
+        const id = db.ref().child('products').push().key;
+        const data = { title, description, price, sellerName: auth.currentUser.displayName || auth.currentUser.email, sellerContact: contact, isSold:false, createdAt: Date.now() };
+        try{
+          if(file && file.size>0){
+            const path = 'product_images/'+id+'_'+file.name;
+            await storage.ref(path).put(file);
+            data.imagePath = path;
+          }
+          await db.ref('products/'+id).set(data);
+          alert('Produto publicado com sucesso');
+          back.remove();
+        }catch(e){alert('Erro ao publicar: '+e.message)}
+      });
+    }
+
+    // ====== EMAIL AUTH MODAL ======
+    const btnAuthEmail = document.getElementById('btnAuthEmail');
+    btnAuthEmail.addEventListener('click', ()=>{
+      const tpl = document.getElementById('modalAuthEmail');
+      const node = tpl.content.cloneNode(true); document.body.appendChild(node);
+      const back = document.querySelector('.modal-back');
+      document.getElementById('btnCloseEmail').addEventListener('click', ()=>back.remove());
+      const form = document.getElementById('emailForm');
+      form.addEventListener('submit', async (ev)=>{
+        ev.preventDefault();
+        const act = ev.submitter.value; // 'login' or 'register'
+        const fd = new FormData(form);
+        const email = fd.get('email'); const password = fd.get('password');
+        try{
+          if(act==='register'){
+            await auth.createUserWithEmailAndPassword(email,password);
+            alert('Registrado com sucesso (email/senha).');
+          } else {
+            await auth.signInWithEmailAndPassword(email,password);
+            alert('Logado com sucesso.');
+          }
+          back.remove();
+        }catch(e){alert('Erro auth: '+e.message)}
+      });
+    });
+
+    // ====== SEARCH ======
+    document.getElementById('search').addEventListener('input', (e)=>{
+      const q = e.target.value.toLowerCase();
+      productsRef.once('value').then(snap=>{
+        const all = snap.val() || {};
+        const filtered = Object.fromEntries(Object.entries(all).filter(([k,v])=>{
+          return [v.title, v.description, v.sellerName].some(field=>field && field.toLowerCase().includes(q));
+        }));
+        renderProducts(filtered);
+      });
+    });
+
+    // ====== Helpers ======
+    function escapeHtml(s){ if(!s) return ''; return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    // ====== Nota sobre hash_config (SCRYPT) ======
+    /*
+      Você incluiu um bloco "hash_config" (SCRYPT). IMPORTANTE:
+      - Esse hash_config é usado ao importar usuários para o Firebase Authentication via Admin SDK (servidor),
+        quando você tem senhas já hashadas e quer migrar para o Firebase.
+      - Não é possível aplicar esse hash_config do lado do cliente (navegador).
+      - Se quiser, eu posso gerar um script Node.js (Admin SDK) para importar usuários com esse hash_config.
+
+      Exemplo do que posso gerar para você: um script Node.js que usa firebase-admin.auth().importUsers([...], {hash: {algorithm: 'SCRYPT', ...}})
+    */
+
+    // ====== Inicialização rápida: carrega produtos já existentes (caso o DB esteja vazio o listener acima cuidará) ======
+    productsRef.once('value').then(snap=>{ renderProducts(snap.val()); });
+  </script>
+</body>
+</html>
