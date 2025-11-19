@@ -1,108 +1,225 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MercadoOne - Dark Marketplace (Firebase)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Marketplace One — Full Feature Dark (Extenso)</title>
+  <meta name="description" content="Marketplace estilo Mercado Livre / Shopee - UI dark, Firebase Auth (Google + Email), Storage, Realtime DB, carrinho, avaliações, dashboard do vendedor e muito mais." />
   <style>
-    :root{--bg:#0b0f12;--card:#0f1720;--muted:#9aa4b2;--accent:#7c3aed}
+    /* =====================
+       Tema Dark Extenso - Estilo ML / Shopee
+       ===================== */
+    :root{
+      --bg:#0b0f13;--panel:#0f1720;--muted:#9aa4b2;--accent:#f7d354;--accent-2:#ff6b6b;--success:#00e5a8;
+      --glass: rgba(255,255,255,0.03);
+    }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,#071017 0%,#09121a 100%);color:#e6eef6}
-    .container{max-width:1100px;margin:32px auto;padding:20px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;color:#e6eef6;background:linear-gradient(180deg,#071017 0%,#09121a 100%)}
+    a{color:inherit}
+
+    /* Header */
+    header{position:sticky;top:0;z-index:60;background:linear-gradient(180deg,rgba(6,10,16,0.6),rgba(6,10,16,0.4));backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,0.02)}
+    .topbar{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px}
     .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#4f46e5);display:flex;align-items:center;justify-content:center;font-weight:700}
-    h1{margin:0;font-size:20px}
-    p.subtitle{margin:0;color:var(--muted);font-size:13px}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#4f46e5);display:flex;align-items:center;justify-content:center;font-weight:800}
+    .brand h1{font-size:18px;margin:0}
+    .brand small{display:block;color:var(--muted);font-size:12px}
+
+    /* Search + actions */
+    .searchWrap{display:flex;flex:1;align-items:center;gap:10px;margin-left:10px}
+    .search{display:flex;align-items:center;background:var(--glass);padding:8px;border-radius:999px;width:100%;max-width:640px}
+    .search input{flex:1;background:transparent;border:0;padding:8px 10px;color:inherit;outline:0}
+    .search button{background:transparent;border:0;padding:8px 10px;cursor:pointer}
+
     .actions{display:flex;gap:8px;align-items:center}
-    .btn{background:var(--accent);border:none;padding:8px 12px;border-radius:10px;color:white;cursor:pointer}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
-    .search{display:flex;align-items:center;background:#071622;border-radius:999px;padding:6px 10px;gap:8px;width:420px}
-    .search input{background:transparent;border:0;color:inherit;outline:0;width:100%}
+    .btn{background:var(--accent);border:0;padding:8px 12px;border-radius:10px;color:#000;font-weight:600;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .iconBtn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px}
 
-    main{margin-top:18px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-    .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);display:flex;flex-direction:column}
-    .thumb{height:160px;border-radius:8px;background:linear-gradient(180deg,#0b1116,#061018);display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden}
-    .meta{margin-top:10px;display:flex;justify-content:space-between;align-items:center}
-    .price{color:var(--accent);font-weight:700}
+    /* Layout */
+    .wrap{max-width:1200px;margin:20px auto;display:grid;grid-template-columns:250px 1fr;gap:20px;padding:0 20px}
+    .leftPanel{background:linear-gradient(180deg,#0d1318,#09131a);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+    .rightPanel{display:flex;flex-direction:column;gap:16px}
+
+    /* Filters / categories */
+    .sectionTitle{font-weight:700;font-size:14px;margin-bottom:8px}
+    .category{padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);margin-bottom:8px;cursor:pointer}
+    .category.active{background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.04)}
+
+    /* Products grid */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:linear-gradient(180deg,#0f1720,#0b1216);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);transition:transform .15s ease, box-shadow .15s;}
+    .card:hover{transform:translateY(-6px);box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    .thumb{height:160px;border-radius:8px;overflow:hidden;background:#07121a;display:flex;align-items:center;justify-content:center}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .title{font-weight:600;margin:8px 0}
+    .desc{color:var(--muted);font-size:13px;height:40px;overflow:hidden}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+    .price{color:var(--success);font-weight:800}
     .seller{color:var(--muted);font-size:12px}
-    .card .actions{margin-top:10px;display:flex;gap:8px}
+    .card .card-actions{display:flex;gap:8px;margin-top:10px}
 
-    .floating{position:fixed;right:22px;bottom:22px}
+    /* Product detail panel (right-most area when open) */
+    .detail{background:linear-gradient(180deg,#07121a,#08121a);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+    .detail .bigImg{height:320px;border-radius:10px;overflow:hidden;background:#061018;display:flex;align-items:center;justify-content:center}
+    .detail .info{margin-top:12px}
 
-    /* modal */
-    .modal-back{position:fixed;inset:0;background:rgba(2,6,23,0.7);display:flex;align-items:center;justify-content:center}
-    .modal{width:100%;max-width:680px;background:#071018;padding:18px;border-radius:12px}
-    label{display:block;font-size:13px;margin-top:8px;color:var(--muted)}
-    input[type=text],input[type=number],textarea{width:100%;background:#071622;border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:8px;color:inherit}
-    textarea{min-height:96px}
+    /* Cart drawer */
+    .drawer{position:fixed;right:20px;bottom:20px;width:360px;background:#0b1116;border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 10px 40px rgba(0,0,0,0.6)}
+    .drawer h4{margin:0 0 8px 0}
+    .cart-item{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);margin-bottom:8px}
+    .cart-item img{width:56px;height:56px;object-fit:cover;border-radius:6px}
+    .cart-summary{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
 
-    footer{margin-top:28px;text-align:center;color:var(--muted);font-size:13px}
+    /* Seller dashboard */
+    .sellerDash{background:linear-gradient(180deg,#071018,#061018);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+    .table{width:100%;border-collapse:collapse}
+    .table th{ text-align:left;padding:6px;color:var(--muted);font-size:13px }
+    .table td{padding:6px;font-size:14px}
 
-    .topbar-auth{display:flex;gap:8px;align-items:center}
-    .small{font-size:12px;color:var(--muted)}
+    /* pagination */
+    .pagination{display:flex;gap:6px;align-items:center;margin-top:12px}
+    .pageBtn{padding:6px 10px;background:transparent;border:1px solid rgba(255,255,255,0.03);border-radius:6px;cursor:pointer}
 
     /* responsive */
-    @media (max-width:600px){.search{width:100%}.brand h1{font-size:16px}}
+    @media (max-width:900px){.wrap{grid-template-columns:1fr}.drawer{right:10px;left:10px;width:auto}}
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
+  <header>
+    <div class="topbar">
       <div class="brand">
-        <div class="logo">M</div>
+        <div class="logo">MO</div>
         <div>
-          <h1>MercadoOne</h1>
-          <p class="subtitle">Venda e compre direto — dark UI • Firebase</p>
+          <h1>Marketplace One</h1>
+          <small>Venda. Compre. Conecte — Dark Full</small>
+        </div>
+      </div>
+
+      <div class="searchWrap">
+        <div class="search" role="search">
+          <button class="iconBtn" aria-hidden>🔍</button>
+          <input id="q" placeholder="Busque produtos, vendedores, categorias..." />
+          <select id="sort" style="background:transparent;border:0;color:var(--muted);outline:0;margin-left:8px">
+            <option value="new">Mais recentes</option>
+            <option value="price-asc">Menor preço</option>
+            <option value="price-desc">Maior preço</option>
+            <option value="popular">Mais populares</option>
+          </select>
         </div>
       </div>
 
       <div class="actions">
-        <div class="search" role="search">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M21 21l-4.35-4.35" stroke="#9aa4b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="#9aa4b2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <input id="search" placeholder="Procurar produto, vendedor..." />
-        </div>
-
-        <div class="topbar-auth">
-          <div id="userBox" class="small">Não está logado</div>
-          <button id="btnLoginGoogle" class="btn">Entrar com Google</button>
-          <button id="btnOpenSell" class="btn ghost">Vender</button>
-        </div>
+        <button id="btnWishlist" class="iconBtn" title="Favoritos">♡</button>
+        <button id="btnSellerDashboard" class="btn ghost">Painel Vendedor</button>
+        <button id="btnAuth" class="btn">Entrar</button>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <main>
-      <section id="productGrid" class="grid"></section>
-      <div id="loading" class="small">Carregando produtos...</div>
+  <div class="wrap">
+    <aside class="leftPanel">
+      <div>
+        <div class="sectionTitle">Categorias</div>
+        <div id="categories"></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="sectionTitle">Filtros</div>
+        <label class="small">Faixa de preço</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input id="minPrice" placeholder="R$ min" type="number" style="padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit" />
+          <input id="maxPrice" placeholder="R$ max" type="number" style="padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit" />
+        </div>
+        <div style="margin-top:10px"><button class="btn" id="btnApplyFilters">Aplicar</button></div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="sectionTitle">Sua conta</div>
+        <div id="accountBox" class="small">Não logado</div>
+        <div style="margin-top:8px;display:flex;gap:6px"><button id="btnGoogle" class="btn ghost">Google</button><button id="btnEmailAuth" class="btn">Email</button></div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="sectionTitle">Ajuda</div>
+        <div class="small">Suporte • Política de devolução • Termos</div>
+      </div>
+    </aside>
+
+    <main class="rightPanel">
+      <section>
+        <div style="display:flex;justify-content:space-between;align-items:end">
+          <h2>Produtos</h2>
+          <div class="small" id="resultCount"></div>
+        </div>
+
+        <div id="products" class="grid"></div>
+
+        <div class="pagination" id="pagination"></div>
+      </section>
+
+      <section class="sellerDash" id="sellerSection" style="display:none">
+        <h3>Painel do Vendedor</h3>
+        <div style="display:flex;gap:8px;margin-bottom:8px"><button id="btnNewProduct" class="btn">+ Novo Produto</button><button id="btnMyProducts" class="btn ghost">Meus Produtos</button></div>
+        <div id="sellerContent"></div>
+      </section>
+
+      <section class="detail" id="productDetail" style="display:none">
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:300px">
+            <div class="bigImg" id="detailImg">Imagem</div>
+            <div style="display:flex;gap:8px;margin-top:8px" id="thumbs"></div>
+          </div>
+          <div style="flex:1;min-width:280px">
+            <div class="info">
+              <h3 id="detailTitle"></h3>
+              <div class="small" id="detailSeller"></div>
+              <div style="margin-top:8px" class="price" id="detailPrice"></div>
+              <p class="desc" id="detailDesc"></p>
+
+              <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+                <button id="btnAddCart" class="btn">Adicionar ao carrinho</button>
+                <button id="btnContactSeller" class="btn ghost">Contato</button>
+              </div>
+
+              <div style="margin-top:12px">
+                <div class="sectionTitle">Avaliações</div>
+                <div id="reviews"></div>
+                <div style="margin-top:8px"><button id="btnWriteReview" class="btn ghost">Escrever avaliação</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
-
-    <footer>Feito com ❤️ • MercadoOne • Firebase</footer>
   </div>
 
-  <div class="floating">
-    <button id="btnAuthEmail" class="btn">Login / Registrar (email)</button>
+  <!-- CART DRAWER -->
+  <div class="drawer" id="cartDrawer">
+    <h4>Carrinho</h4>
+    <div id="cartItems"></div>
+    <div class="cart-summary">
+      <div class="small">Total</div>
+      <div id="cartTotal" style="font-weight:800"></div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px"><button id="btnCheckout" class="btn">Finalizar</button><button id="btnClearCart" class="btn ghost">Limpar</button></div>
   </div>
 
-  <!-- Modais -->
-  <template id="modalSell">
-    <div class="modal-back">
-      <div class="modal">
-        <h3>Vender um produto</h3>
-        <form id="sellForm">
-          <label>Título</label>
-          <input name="title" required />
-          <label>Descrição</label>
-          <textarea name="description" required></textarea>
-          <label>Preço (R$)</label>
-          <input name="price" type="number" step="0.01" required />
-          <label>Contato (email ou telefone)</label>
-          <input name="contact" required />
-          <label>Imagem (opcional)</label>
-          <input name="image" type="file" accept="image/*" />
-
-          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-            <button type="button" id="btnCloseSell" class="btn ghost">Cancelar</button>
+  <!-- TEMPLATES / MODALS -->
+  <template id="modalNewProduct">
+    <div class="modalBack">
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6)"></div>
+      <div style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:680px;background:#07121a;padding:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)">
+        <h3>Novo Produto</h3>
+        <form id="formNewProduct">
+          <input name="title" placeholder="Título" required style="width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)" />
+          <textarea name="description" placeholder="Descrição" required style="width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)"></textarea>
+          <input name="price" type="number" placeholder="Preço" required style="padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)" />
+          <input name="category" placeholder="Categoria" style="padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)" />
+          <input type="file" name="images" multiple style="margin-top:8px" />
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+            <button type="button" id="btnCloseNew" class="btn ghost">Cancelar</button>
             <button type="submit" class="btn">Publicar</button>
           </div>
         </form>
@@ -110,33 +227,31 @@
     </div>
   </template>
 
-  <template id="modalAuthEmail">
-    <div class="modal-back">
-      <div class="modal">
-        <h3>Entrar / Registrar (email)</h3>
-        <form id="emailForm">
-          <label>Email</label>
-          <input name="email" type="text" required />
-          <label>Senha</label>
-          <input name="password" type="password" required />
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-            <button type="button" id="btnCloseEmail" class="btn ghost">Fechar</button>
-            <button type="submit" name="action" value="login" class="btn">Entrar</button>
-            <button type="submit" name="action" value="register" class="btn">Registrar</button>
+  <template id="modalReview">
+    <div>
+      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6)"></div>
+      <div style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:420px;background:#07121a;padding:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)">
+        <h3>Escrever Avaliação</h3>
+        <form id="formReview">
+          <input name="rating" type="number" min="1" max="5" placeholder="Nota (1-5)" required style="width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)" />
+          <textarea name="text" placeholder="Comentário" required style="width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)"></textarea>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+            <button type="button" id="btnCloseReview" class="btn ghost">Cancelar</button>
+            <button type="submit" class="btn">Enviar</button>
           </div>
         </form>
       </div>
     </div>
   </template>
 
-  <!-- Firebase CDN compat (usamos compat para simplificar exemplos em um único arquivo) -->
+  <!-- Firebase compat libs (single-file demo) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
   <script>
-    /***** CONFIGURAÇÃO: cole seu firebaseConfig exatamente como você enviou *****/
+    /***** CONFIGURAÇÃO FIREBASE (cole as suas chaves) *****/
     const firebaseConfig = {
       apiKey: "AIzaSyDUextNAsgjKWMBgvZRgpD-ZBMowtyA5g8",
       authDomain: "mercadoone-256a8.firebaseapp.com",
@@ -146,180 +261,298 @@
       messagingSenderId: "491377689826",
       appId: "1:491377689826:web:2c5dd9eb5f86b0b424cabb"
     };
-
-    // Inicializa
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
     const storage = firebase.storage();
 
-    // Observador de autenticação
-    const userBox = document.getElementById('userBox');
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        userBox.textContent = user.displayName || user.email;
+    // Client config (you provided a Google OAuth client ID)
+    const GOOGLE_CLIENT_ID = '491377689826-2cdt9oso75th14msjtlt6veu8k0g1ql6.apps.googleusercontent.com';
+
+    // App state
+    let PRODUCTS = {}; // cache local
+    let CATEGORIES = new Set();
+    let CART = JSON.parse(localStorage.getItem('mo_cart')||'[]');
+    const PAGE_SIZE = 12;
+    let currentPage = 1;
+    let currentCategory = null;
+    let currentQuery = '';
+
+    // Utils
+    const $ = (id)=>document.getElementById(id);
+    function el(tag, cls, html){const d=document.createElement(tag);if(cls)d.className=cls;if(html!==undefined)d.innerHTML=html;return d}
+    function formatPrice(v){return 'R$ '+Number(v).toFixed(2)}
+
+    /* ----------------
+       AUTH
+       ---------------- */
+    const btnGoogle = $('btnGoogle');
+    const btnEmailAuth = $('btnEmailAuth');
+    const btnAuth = $('btnAuth');
+    const accountBox = $('accountBox');
+
+    auth.onAuthStateChanged(user=>{
+      if(user){
+        accountBox.textContent = user.displayName || user.email;
+        btnAuth.textContent = 'Sair';
       } else {
-        userBox.textContent = 'Não está logado';
+        accountBox.textContent = 'Não logado';
+        btnAuth.textContent = 'Entrar';
       }
     });
-
-    // --------- LOGIN GOOGLE ----------
-    const btnGoogle = document.getElementById('btnLoginGoogle');
-    // Observação: para usar Google sign-in, configure o OAuth Client ID no Firebase Console -> Auth -> Sign-in method -> Google
-    // Você forneceu este client ID: 491377689826-2cdt9oso75th14msjtlt6veu8k0g1ql6.apps.googleusercontent.com
-    // Adicione-o no console do Firebase para evitar problemas.
 
     btnGoogle.addEventListener('click', async ()=>{
       const provider = new firebase.auth.GoogleAuthProvider();
-      try{
-        await auth.signInWithPopup(provider);
-      }catch(e){
-        alert('Erro no login Google: '+e.message);
-      }
+      try{await auth.signInWithPopup(provider);}catch(e){alert('Erro Google: '+e.message)}
     });
 
-    // --------- CRUD Produtos (Realtime DB) ----------
-    const productGrid = document.getElementById('productGrid');
-    const loading = document.getElementById('loading');
+    btnEmailAuth.addEventListener('click', ()=>{ openEmailAuth(); });
 
-    function renderProducts(list){
-      productGrid.innerHTML='';
-      if(!list||Object.keys(list).length===0){
-        loading.textContent='Nenhum produto disponível.';return;
-      }
-      loading.textContent='';
-      const arr = Object.entries(list).sort((a,b)=> b[1].createdAt - a[1].createdAt);
-      arr.forEach(([id, p]) =>{
-        const card = document.createElement('div');card.className='card';
-        const thumb = document.createElement('div');thumb.className='thumb';
-        if(p.imagePath){
-          const img = document.createElement('img');img.style.width='100%';img.style.height='100%';img.style.objectFit='cover';
-          storage.ref(p.imagePath).getDownloadURL().then(url=>img.src=url).catch(()=>thumb.textContent='Sem imagem');
-          thumb.appendChild(img);
-        } else { thumb.textContent='Sem imagem'; }
-        card.appendChild(thumb);
+    btnAuth.addEventListener('click', ()=>{
+      if(auth.currentUser) auth.signOut(); else openEmailAuth();
+    });
 
-        const title = document.createElement('div');title.style.marginTop='10px';title.innerHTML=`<strong>${escapeHtml(p.title)}</strong><div class='small' style='margin-top:6px;color:var(--muted)'>${escapeHtml(p.description)}</div>`;
-        card.appendChild(title);
-
-        const meta = document.createElement('div');meta.className='meta';
-        meta.innerHTML = `<div><div class='price'>R$ ${Number(p.price).toFixed(2)}</div><div class='seller'>${escapeHtml(p.sellerName)}</div></div>`;
-
-        const actions = document.createElement('div');actions.className='actions';
-        const btnContact = document.createElement('button');btnContact.className='btn ghost';btnContact.textContent='Contato';
-        btnContact.addEventListener('click',()=>{ alert('Contato do vendedor: '+p.sellerContact); });
-        const btnBuy = document.createElement('button');btnBuy.className='btn';btnBuy.textContent = p.isSold ? 'Vendido' : 'Comprar';
-        btnBuy.disabled = p.isSold;
-        btnBuy.addEventListener('click', ()=>{ markSold(id); });
-        actions.appendChild(btnContact);actions.appendChild(btnBuy);
-
-        meta.appendChild(actions);
-        card.appendChild(meta);
-        productGrid.appendChild(card);
-      });
+    function openEmailAuth(){
+      const tpl = document.createElement('div'); tpl.innerHTML = `
+        <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999">
+          <div style="position:fixed;inset:0;background:rgba(0,0,0,0.6)"></div>
+          <div style="background:#07121a;padding:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);width:320px">
+            <h3>Entrar / Registrar</h3>
+            <input id='authEmail' placeholder='Email' style='width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)' />
+            <input id='authPass' placeholder='Senha' type='password' style='width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)' />
+            <div style='display:flex;gap:8px;margin-top:10px;justify-content:flex-end'>
+              <button id='cancelAuth' class='btn ghost'>Cancelar</button>
+              <button id='doLogin' class='btn'>Entrar</button>
+              <button id='doRegister' class='btn ghost'>Registrar</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(tpl);
+      $('cancelAuth').onclick = ()=>tpl.remove();
+      $('doLogin').onclick = async ()=>{
+        const e = $('authEmail').value; const p = $('authPass').value; try{await auth.signInWithEmailAndPassword(e,p);tpl.remove();}catch(er){alert('Erro login: '+er.message)}
+      };
+      $('doRegister').onclick = async ()=>{
+        const e = $('authEmail').value; const p = $('authPass').value; try{await auth.createUserWithEmailAndPassword(e,p);tpl.remove();}catch(er){alert('Erro registrar: '+er.message)}
+      };
     }
 
-    // Escuta realtime
+    /* ----------------
+       LOAD PRODUCTS (Realtime)
+       ---------------- */
     const productsRef = db.ref('products');
-    productsRef.on('value', snapshot=>{
-      renderProducts(snapshot.val());
+    productsRef.on('value', snap=>{
+      PRODUCTS = snap.val() || {};
+      // build categories
+      CATEGORIES = new Set(Object.values(PRODUCTS||{}).map(p=>p.category).filter(Boolean));
+      renderCategories();
+      renderProducts();
     });
 
-    // Marcar vendido (simulado)
-    function markSold(id){
-      if(!confirm('Marcar este produto como vendido?')) return;
-      db.ref('products/'+id).update({isSold:true});
-      alert('Produto marcado como vendido. Entre em contato com o vendedor para finalizar pagamento.');
+    function renderCategories(){
+      const container = $('categories'); container.innerHTML='';
+      const all = el('div','category'+(currentCategory? '':' active'),'Todas'); all.onclick=()=>{currentCategory=null;renderProducts()}; container.appendChild(all);
+      Array.from(CATEGORIES).forEach(cat=>{const c=el('div','category',cat); if(cat===currentCategory)c.classList.add('active'); c.onclick=()=>{currentCategory=cat;renderProducts()}; container.appendChild(c)});
     }
 
-    // ====== SELL MODAL ======
-    const btnOpenSell = document.getElementById('btnOpenSell');
-    btnOpenSell.addEventListener('click', ()=>openSellModal());
+    /* ----------------
+       RENDER PRODUCTS (filter, sort, paginate)
+       ---------------- */
+    function renderProducts(){
+      const grid = $('products'); grid.innerHTML='';
+      const q = (document.getElementById('q').value||'').toLowerCase(); currentQuery = q;
+      let arr = Object.entries(PRODUCTS).map(([id,p])=>({id,...p}));
+      // filter category
+      if(currentCategory) arr = arr.filter(x=>x.category===currentCategory);
+      // search
+      if(q) arr = arr.filter(x=>[x.title,x.description,x.sellerName,(x.category||'')].some(f=>f && f.toLowerCase().includes(q)));
+      // sort
+      const sort = $('sort').value;
+      if(sort==='price-asc') arr.sort((a,b)=>a.price-b.price);
+      else if(sort==='price-desc') arr.sort((a,b)=>b.price-a.price);
+      else if(sort==='popular') arr.sort((a,b)=>(b.reviews?Object.keys(b.reviews).length:0)-(a.reviews?Object.keys(a.reviews).length:0));
+      else arr.sort((a,b)=>b.createdAt - a.createdAt);
 
-    function openSellModal(){
-      if(!auth.currentUser){ if(!confirm('Você precisa entrar para publicar. Entrar agora?')) return; else btnAuthEmail.click(); }
-      const tpl = document.getElementById('modalSell');
-      const node = tpl.content.cloneNode(true); document.body.appendChild(node);
-      const back = document.querySelector('.modal-back');
-      document.getElementById('btnCloseSell').addEventListener('click', ()=>back.remove());
-      const form = document.getElementById('sellForm');
-      form.addEventListener('submit', async (ev)=>{
-        ev.preventDefault();
-        const fd = new FormData(form);
-        const title = fd.get('title');
-        const description = fd.get('description');
-        const price = Number(fd.get('price'))||0;
-        const contact = fd.get('contact');
-        const file = fd.get('image');
+      // pagination
+      const total = arr.length; const pages = Math.max(1,Math.ceil(total/PAGE_SIZE));
+      if(currentPage>pages) currentPage=pages;
+      const start = (currentPage-1)*PAGE_SIZE; arr = arr.slice(start,start+PAGE_SIZE);
+
+      $('resultCount').textContent = `${total} resultados`;
+
+      arr.forEach(p=>{
+        const c = el('div','card');
+        const t = el('div','thumb');
+        if(p.imagePaths && p.imagePaths.length){
+          const img = document.createElement('img'); img.src = p.imagePaths[0]; t.appendChild(img);
+        } else t.textContent='Sem imagem';
+        c.appendChild(t);
+        c.appendChild(el('div','title',escapeHtml(p.title)));
+        c.appendChild(el('div','desc',escapeHtml(p.description)));
+        const meta = el('div','meta');
+        meta.appendChild(el('div','','<div class="price">'+formatPrice(p.price)+'</div><div class="seller">'+escapeHtml(p.sellerName)+'</div>'));
+        const actions = el('div','card-actions');
+        const btnContact = el('button','btn ghost','Contato'); btnContact.onclick=()=>alert('Contato do vendedor: '+(p.sellerContact||'Não informado'));
+        const btnView = el('button','btn','Ver'); btnView.onclick=()=>openProductDetail(p.id);
+        actions.appendChild(btnContact); actions.appendChild(btnView);
+        meta.appendChild(actions);
+        c.appendChild(meta);
+        grid.appendChild(c);
+      });
+
+      // pagination render
+      const pagWrap = $('pagination'); pagWrap.innerHTML='';
+      for(let i=1;i<=pages;i++){ const b = el('button','pageBtn',i); if(i===currentPage) b.style.opacity=1; b.onclick=(()=>{return ()=>{currentPage=i;renderProducts()}})(); pagWrap.appendChild(b); }
+    }
+
+    // controls
+    document.getElementById('q').addEventListener('input', ()=>{currentPage=1;renderProducts()});
+    document.getElementById('sort').addEventListener('change', ()=>{renderProducts()});
+    document.getElementById('btnApplyFilters').addEventListener('click', ()=>{applyFilters()});
+
+    function applyFilters(){
+      const min = Number($('minPrice').value) || 0; const max = Number($('maxPrice').value) || Infinity;
+      // filter stored in PRODUCTS rendering
+      // we implement by adding a temporary filter
+      const originalRender = renderProducts;
+      // naive approach: filter PRODUCTS before render
+      const filtered = Object.fromEntries(Object.entries(PRODUCTS).filter(([id,p])=>p.price>=min && p.price<=max));
+      // temporarily override
+      const prev = PRODUCTS; PRODUCTS = filtered; renderProducts(); PRODUCTS = prev; // revert
+    }
+
+    /* ----------------
+       PRODUCT DETAIL
+       ---------------- */
+    function openProductDetail(id){
+      const p = PRODUCTS[id]; if(!p) return alert('Produto não encontrado');
+      document.getElementById('productDetail').style.display='block';
+      $('detailTitle').textContent = p.title; $('detailPrice').textContent = formatPrice(p.price);
+      $('detailDesc').textContent = p.description; $('detailSeller').textContent = 'Vendido por: '+(p.sellerName||p.seller);
+      const bigImg = $('detailImg'); bigImg.innerHTML=''; if(p.imagePaths && p.imagePaths.length){ const img = document.createElement('img'); img.src=p.imagePaths[0]; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover'; bigImg.appendChild(img); }
+      const thumbs = $('thumbs'); thumbs.innerHTML=''; if(p.imagePaths) p.imagePaths.forEach(url=>{ const im = document.createElement('img'); im.src=url; im.style.width='64px'; im.style.height='64px'; im.style.objectFit='cover'; im.style.borderRadius='6px'; im.style.cursor='pointer'; im.onclick=()=>{ bigImg.innerHTML=''; const ii=document.createElement('img'); ii.src=url; ii.style.width='100%'; ii.style.height='100%'; ii.style.objectFit='cover'; bigImg.appendChild(ii);}; thumbs.appendChild(im); });
+      // reviews
+      renderReviews(id);
+      // set current actions
+      $('btnAddCart').onclick = ()=>{ addToCart(id); };
+      $('btnContactSeller').onclick = ()=>{ alert('Contato: '+(p.sellerContact||'Não informado')) };
+      // write review
+      $('btnWriteReview').onclick = ()=>openReviewModal(id);
+    }
+
+    /* ----------------
+       REVIEWS
+       ---------------- */
+    function renderReviews(productId){
+      const container = $('reviews'); container.innerHTML='';
+      const p = PRODUCTS[productId]; if(!p || !p.reviews){ container.textContent = 'Sem avaliações'; return; }
+      const r = p.reviews; Object.entries(r).forEach(([rid,rev])=>{ const elrev = el('div','','<strong>'+escapeHtml(rev.userName||'Anon')+'</strong> <span class="small">('+rev.rating+'/5)</span><div class="small">'+escapeHtml(rev.text)+'</div>'); container.appendChild(elrev); });
+    }
+
+    function openReviewModal(productId){
+      const tpl = document.getElementById('modalReview').content.cloneNode(true); document.body.appendChild(tpl);
+      document.getElementById('btnCloseReview').onclick = ()=>{ document.querySelectorAll('[id^=btnCloseReview]').forEach(x=>x.closest('div').remove()); };
+      document.getElementById('formReview').onsubmit = async (ev)=>{
+        ev.preventDefault(); const fd = new FormData(ev.target); const rating = Number(fd.get('rating')); const text = fd.get('text');
+        if(!auth.currentUser) return alert('Faça login para enviar avaliação');
+        const id = db.ref('products/'+productId+'/reviews').push().key;
+        const data = {rating,text,userId:auth.currentUser.uid,userName:auth.currentUser.displayName||auth.currentUser.email,createdAt:Date.now()};
+        await db.ref('products/'+productId+'/reviews/'+id).set(data);
+        alert('Avaliação enviada'); document.querySelectorAll('[id^=btnCloseReview]').forEach(x=>x.closest('div').remove());
+      };
+    }
+
+    /* ----------------
+       CART
+       ---------------- */
+    function saveCart(){ localStorage.setItem('mo_cart',JSON.stringify(CART)); renderCart(); }
+    function addToCart(productId){ const p = PRODUCTS[productId]; if(!p) return alert('Produto indisponível'); const found = CART.find(c=>c.id===productId); if(found){ found.qty++; } else CART.push({id:productId,qty:1,title:p.title,price:p.price,img:(p.imagePaths&&p.imagePaths[0])||''}); saveCart(); alert('Adicionado ao carrinho'); }
+    function renderCart(){ const box = $('cartItems'); box.innerHTML=''; let total=0; CART.forEach((it,idx)=>{ const div = el('div','cart-item'); const im = document.createElement('img'); im.src = it.img||''; div.appendChild(im); const desc = el('div'); desc.innerHTML = '<div style="font-weight:700">'+escapeHtml(it.title)+'</div><div class="small">Qty: '+it.qty+'</div>'; div.appendChild(desc); const rem = el('div'); rem.style.marginLeft='auto'; rem.innerHTML = '<div style="font-weight:700">'+formatPrice(it.price*it.qty)+'</div><div class="small"><button class="btn ghost">-</button> <button class="btn">+</button></div>';
+      const minus = rem.querySelectorAll('button')[0]; const plus = rem.querySelectorAll('button')[1]; minus.onclick = ()=>{ if(it.qty>1){ it.qty--; saveCart(); } else { CART.splice(idx,1); saveCart(); } }; plus.onclick = ()=>{ it.qty++; saveCart(); };
+      div.appendChild(rem); box.appendChild(div); total += it.price*it.qty; });
+      $('cartTotal').textContent = formatPrice(total);
+    }
+
+    $('btnClearCart').onclick = ()=>{ CART=[]; saveCart(); };
+    $('btnCheckout').onclick = ()=>{ if(!auth.currentUser) return alert('Faça login para finalizar'); if(CART.length===0) return alert('Carrinho vazio'); alert('Simulação de checkout: você deve integrar um gateway (Stripe, MercadoPago).'); }
+
+    saveCart(); renderCart();
+
+    /* ----------------
+       SELLER DASHBOARD
+       ---------------- */
+    $('btnSellerDashboard').onclick = ()=>{
+      if(!auth.currentUser) return alert('Faça login para acessar o painel do vendedor'); $('sellerSection').style.display='block'; renderSellerDashboard(); window.scrollTo({top:0,behavior:'smooth'});
+    };
+
+    $('btnNewProduct').onclick = ()=>openNewProductModal();
+
+    function renderSellerDashboard(){
+      const uid = auth.currentUser.uid; const all = Object.entries(PRODUCTS).filter(([id,p])=>p.sellerId===uid);
+      const wrapper = $('sellerContent'); wrapper.innerHTML='';
+      if(all.length===0) wrapper.textContent = 'Você ainda não tem produtos.';
+      else{
+        const table = el('table','table'); const thead = document.createElement('thead'); thead.innerHTML='<tr><th>Título</th><th>Preço</th><th>Vendido</th><th>Ações</th></tr>'; table.appendChild(thead);
+        const tbody = document.createElement('tbody'); all.forEach(([id,p])=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(p.title)}</td><td>${formatPrice(p.price)}</td><td>${p.isSold? 'Sim':'Não'}</td><td><button class='btn ghost' data-id='${id}'>Editar</button> <button class='btn' data-id='${id}'>Excluir</button></td>`; tbody.appendChild(tr); }); table.appendChild(tbody); wrapper.appendChild(table);
+        // attach delete
+        wrapper.querySelectorAll('button').forEach(b=>{ b.onclick = async ()=>{ const id = b.getAttribute('data-id'); if(b.textContent.includes('Excluir')){ if(confirm('Excluir produto?')){ await db.ref('products/'+id).remove(); alert('Removido'); renderSellerDashboard(); } } else { alert('Funcionalidade editar não implementada nesta demo'); } } })
+      }
+    }
+
+    function openNewProductModal(){
+      const tpl = document.getElementById('modalNewProduct').content.cloneNode(true); document.body.appendChild(tpl);
+      document.getElementById('btnCloseNew').onclick = ()=>{ document.querySelectorAll('.modalBack').forEach(x=>x.remove()); };
+      document.getElementById('formNewProduct').onsubmit = async (ev)=>{
+        ev.preventDefault(); const fd = new FormData(ev.target);
+        const title = fd.get('title'); const description = fd.get('description'); const price = Number(fd.get('price')||0); const category = fd.get('category')||'Geral'; const files = ev.target.querySelector('input[type=file]').files;
+        if(!auth.currentUser) return alert('Faça login');
         const id = db.ref().child('products').push().key;
-        const data = { title, description, price, sellerName: auth.currentUser.displayName || auth.currentUser.email, sellerContact: contact, isSold:false, createdAt: Date.now() };
-        try{
-          if(file && file.size>0){
-            const path = 'product_images/'+id+'_'+file.name;
-            await storage.ref(path).put(file);
-            data.imagePath = path;
-          }
-          await db.ref('products/'+id).set(data);
-          alert('Produto publicado com sucesso');
-          back.remove();
-        }catch(e){alert('Erro ao publicar: '+e.message)}
-      });
+        const productData = { title, description, price, category, sellerId:auth.currentUser.uid, sellerName:auth.currentUser.displayName||auth.currentUser.email, sellerContact:auth.currentUser.email, isSold:false, createdAt:Date.now() };
+        // upload images sequentially (simple)
+        if(files && files.length){ productData.imagePaths = []; for(let i=0;i<files.length;i++){ const f=files[i]; const path = `products/${id}/${Date.now()}_${f.name}`; const ref = storage.ref(path); await ref.put(f); const url = await ref.getDownloadURL(); productData.imagePaths.push(url); } }
+        await db.ref('products/'+id).set(productData);
+        alert('Produto publicado'); document.querySelectorAll('[id^=formNewProduct]').forEach(x=>x.closest('div').remove());
+      };
     }
 
-    // ====== EMAIL AUTH MODAL ======
-    const btnAuthEmail = document.getElementById('btnAuthEmail');
-    btnAuthEmail.addEventListener('click', ()=>{
-      const tpl = document.getElementById('modalAuthEmail');
-      const node = tpl.content.cloneNode(true); document.body.appendChild(node);
-      const back = document.querySelector('.modal-back');
-      document.getElementById('btnCloseEmail').addEventListener('click', ()=>back.remove());
-      const form = document.getElementById('emailForm');
-      form.addEventListener('submit', async (ev)=>{
-        ev.preventDefault();
-        const act = ev.submitter.value; // 'login' or 'register'
-        const fd = new FormData(form);
-        const email = fd.get('email'); const password = fd.get('password');
-        try{
-          if(act==='register'){
-            await auth.createUserWithEmailAndPassword(email,password);
-            alert('Registrado com sucesso (email/senha).');
-          } else {
-            await auth.signInWithEmailAndPassword(email,password);
-            alert('Logado com sucesso.');
-          }
-          back.remove();
-        }catch(e){alert('Erro auth: '+e.message)}
-      });
-    });
+    /* ----------------
+       HELPERS & SECURITY NOTES
+       ---------------- */
+    function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s])); }
 
-    // ====== SEARCH ======
-    document.getElementById('search').addEventListener('input', (e)=>{
-      const q = e.target.value.toLowerCase();
-      productsRef.once('value').then(snap=>{
-        const all = snap.val() || {};
-        const filtered = Object.fromEntries(Object.entries(all).filter(([k,v])=>{
-          return [v.title, v.description, v.sellerName].some(field=>field && field.toLowerCase().includes(q));
-        }));
-        renderProducts(filtered);
-      });
-    });
+    // Nota importante sobre hash_config / SCRYPT que você mencionou:
+    // O bloco "hash_config" que inclui algorithm: SCRYPT é usado apenas para importar usuários
+    // com senhas já hashadas **server-side** usando o Firebase Admin SDK.
+    // Não é possível aplicar esse hash_config do lado do cliente (navegador).
+    // Se desejar, eu posso gerar um script Node.js que usa firebase-admin.auth().importUsers([...], {hash:{algorithm:'SCRYPT',...}})
 
-    // ====== Helpers ======
-    function escapeHtml(s){ if(!s) return ''; return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-
-    // ====== Nota sobre hash_config (SCRYPT) ======
+    /* ----------------
+       INSTRUÇÕES DE DEPLOY e MELHORIAS
+       ---------------- */
     /*
-      Você incluiu um bloco "hash_config" (SCRYPT). IMPORTANTE:
-      - Esse hash_config é usado ao importar usuários para o Firebase Authentication via Admin SDK (servidor),
-        quando você tem senhas já hashadas e quer migrar para o Firebase.
-      - Não é possível aplicar esse hash_config do lado do cliente (navegador).
-      - Se quiser, eu posso gerar um script Node.js (Admin SDK) para importar usuários com esse hash_config.
+      1) Segurança (recomendado):
+         - Configure regras do Realtime Database para permitir somente reads públicos e writes de usuários autenticados.
+         - Configure Storage rules para que uploads sejam de usuários autenticados e paths sejam restritos.
 
-      Exemplo do que posso gerar para você: um script Node.js que usa firebase-admin.auth().importUsers([...], {hash: {algorithm: 'SCRYPT', ...}})
+      2) Gateway de pagamento:
+         - Integre Stripe/MercadoPago no backend (Firebase Functions) para criar sessões de checkout.
+
+      3) Migração de usuários com SCRYPT:
+         - Gerei comentários no topo do arquivo sobre como criar um script Node.js para importar.
+
+      4) Otimizações:
+         - Paginação server-side (para grandes bases).
+         - Indexes no Realtime DB para consultas por createdAt, sellerId, category.
+
+      5) Próximos passos que eu posso implementar para você:
+         - Integração Stripe + Webhooks para marcar pedidos como pagos.
+         - Sistema de pedidos / histórico e dashboard do comprador.
+         - Melhorias UI: imagens lazy-load, carrossel de imagens profissional, filtros avançados.
     */
 
-    // ====== Inicialização rápida: carrega produtos já existentes (caso o DB esteja vazio o listener acima cuidará) ======
-    productsRef.once('value').then(snap=>{ renderProducts(snap.val()); });
+    // Inicial render
+    renderProducts();
   </script>
 </body>
 </html>
