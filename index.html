@@ -1,432 +1,603 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Marketplace One — Dark Premium (Verde)</title>
-  <meta name="description" content="Marketplace estilo Mercado Livre / Shopee / Amazon — Dark, verde, Firebase Auth, Storage, Realtime DB, carrinho, avaliações, painel do vendedor e pop-ups organizados." />
-  <style>
-    :root{
-      --bg:#071018; --panel:#0b1312; --muted:#9fb3aa; --accent:#20c997; --accent-2:#0bd18a; --danger:#ff6b6b; --glass: rgba(255,255,255,0.03);
-      --card-shadow: 0 10px 30px rgba(2,6,23,0.6);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;color:#e6f6f1;background:linear-gradient(180deg,#061216 0%,#07121a 100%)}
-    a{color:inherit;text-decoration:none}
-
-    /* ===== Header ===== */
-    header{position:sticky;top:0;z-index:120;background:linear-gradient(180deg,rgba(2,8,7,0.6),rgba(2,8,7,0.4));backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,0.03)}
-    .topbar{max-width:1300px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:14px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#04201a}
-    .brand h1{font-size:18px;margin:0}
-    .brand small{display:block;color:var(--muted);font-size:12px}
-
-    /* Search */
-    .searchWrap{display:flex;flex:1;align-items:center;gap:12px;margin-left:8px}
-    .search{display:flex;align-items:center;background:rgba(255,255,255,0.02);padding:8px;border-radius:999px;width:100%;max-width:760px;border:1px solid rgba(32,201,151,0.06)}
-    .search input{flex:1;background:transparent;border:0;padding:8px 12px;color:inherit;outline:0}
-    .suggestions{position:absolute;left:0;right:0;top:54px;background:#071a16;border-radius:8px;padding:8px;border:1px solid rgba(32,201,151,0.06);box-shadow:var(--card-shadow);z-index:140}
-    .suggestions div{padding:8px;border-radius:6px;cursor:pointer}
-    .suggestions div:hover{background:rgba(255,255,255,0.02)}
-
-    .actions{display:flex;gap:8px;align-items:center}
-    .btn{background:var(--accent);border:0;padding:8px 12px;border-radius:10px;color:#012017;font-weight:700;cursor:pointer}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--muted)}
-    .iconBtn{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px}
-
-    /* ===== Layout ===== */
-    .wrap{max-width:1300px;margin:18px auto;display:grid;grid-template-columns:260px 1fr 360px;gap:20px;padding:0 20px}
-    .leftPanel{background:linear-gradient(180deg,#071210,#061411);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
-    .mainPanel{display:flex;flex-direction:column;gap:16px}
-    .rightPanel{background:linear-gradient(180deg,#071210,#061114);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
-
-    /* Categories / filters */
-    .sectionTitle{font-weight:800;font-size:13px;margin-bottom:8px;color:var(--muted)}
-    .category{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);margin-bottom:8px;cursor:pointer}
-    .category.active{background:linear-gradient(90deg,rgba(32,201,151,0.06),rgba(11,200,150,0.02));border-color:rgba(32,201,151,0.12)}
-    .accordion{margin-bottom:8px}
-    .accordion summary{cursor:pointer;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);list-style:none}
-
-    /* Grid */
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
-    .card{background:linear-gradient(180deg,#0b1713,#071217);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.02);transition:transform .12s ease, box-shadow .12s;box-shadow:0 6px 18px rgba(2,6,23,0.5)}
-    .card:hover{transform:translateY(-8px);box-shadow:var(--card-shadow)}
-    .thumb{height:160px;border-radius:10px;overflow:hidden;background:#051617;display:flex;align-items:center;justify-content:center}
-    .thumb img{width:100%;height:100%;object-fit:cover}
-    .title{font-weight:700;margin:10px 0 6px}
-    .desc{color:var(--muted);font-size:13px;height:44px;overflow:hidden}
-    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-    .price{color:var(--accent);font-weight:900}
-    .seller{color:var(--muted);font-size:12px}
-    .badge{background:rgba(32,201,151,0.08);color:var(--accent);padding:4px 8px;border-radius:999px;font-weight:700}
-
-    /* Product quick view popup (modal) */
-    .modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:160}
-    .modal{width:95%;max-width:980px;background:linear-gradient(180deg,#07121a,#041a16);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:var(--card-shadow)}
-    .modal .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .thumbs-mini{display:flex;gap:8px;margin-top:8px}
-    .thumbs-mini img{width:72px;height:72px;object-fit:cover;border-radius:8px;cursor:pointer}
-    .tabs{display:flex;gap:8px;margin-top:12px}
-    .tab{padding:8px 10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
-    .tab.active{background:rgba(32,201,151,0.06);border-color:rgba(32,201,151,0.12)}
-
-    /* Right column widgets */
-    .widget{background:linear-gradient(180deg,#061210,#041212);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);margin-bottom:12px}
-    .small{font-size:13px;color:var(--muted)}
-
-    /* Cart drawer improved */
-    .cart-drawer{position:fixed;right:20px;top:80px;width:360px;background:#02120f;border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:var(--card-shadow);z-index:150}
-    .cart-item{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);margin-bottom:8px}
-
-    /* Toast notifications */
-    .toast-wrap{position:fixed;left:20px;bottom:20px;z-index:200}
-    .toast{background:#04281f;color:#d6fff1;padding:10px 14px;border-radius:10px;margin-top:8px;box-shadow:0 8px 24px rgba(2,6,23,0.6)}
-
-    /* Responsive adjustments */
-    @media(max-width:1100px){.wrap{grid-template-columns:1fr 360px}.rightPanel{display:none}}
-    @media(max-width:720px){.wrap{grid-template-columns:1fr}.search{max-width:100%}.searchWrap{margin-left:0}.brand h1{display:none}}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Marketplace One — MEGA All-in-One (Dark Verde) — Gbzin</title>
+<meta name="description" content="Marketplace + Social + Chat + Admin — All-in-One bundle. Frontend (Firebase), server templates (Node.js/Firebase Functions/Stripe), GitHub Actions.">
+<style>
+  /* ==========================
+     THEME DARK VERDE - COMPLEX
+     ========================== */
+  :root{
+    --bg:#051218; --panel:#07161a; --muted:#9fc8b8; --accent:#13c48b; --accent-2:#06b37a; --danger:#ff6b6b;
+    --glass: rgba(255,255,255,0.03);
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;color:#e6fff6;background:linear-gradient(180deg,#041018,#07121a)}
+  a{color:inherit}
+  header{position:sticky;top:0;background:linear-gradient(180deg,rgba(2,6,6,.6),rgba(2,6,6,.3));backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,0.02);z-index:50}
+  .topbar{max-width:1400px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:14px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:900;color:#032e21}
+  .brand h1{margin:0;font-size:18px}
+  .searchWrap{flex:1;display:flex;gap:12px;align-items:center}
+  .search{display:flex;align-items:center;gap:8px;background:var(--glass);padding:8px;border-radius:999px;width:100%;max-width:760px;border:1px solid rgba(20,120,90,0.06)}
+  .search input{flex:1;background:transparent;border:0;padding:8px 10px;color:inherit;outline:0}
+  .actions{display:flex;gap:8px;align-items:center}
+  .btn{background:var(--accent);border:0;padding:8px 12px;border-radius:10px;color:#02261a;font-weight:800;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.03);color:var(--muted)}
+  .container{max-width:1400px;margin:18px auto;padding:0 18px;display:grid;grid-template-columns:280px 1fr 360px;gap:18px}
+  .panel{background:linear-gradient(180deg,#061617,#071617);padding:14px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.02)}
+  .left{min-height:400px}
+  .right{min-height:400px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .card{background:linear-gradient(180deg,#07171a,#061517);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);transition:transform .12s,box-shadow .12s}
+  .card:hover{transform:translateY(-6px);box-shadow:0 12px 40px rgba(2,6,12,0.6)}
+  .thumb{height:160px;border-radius:8px;overflow:hidden;background:#031213;display:flex;align-items:center;justify-content:center}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .title{font-weight:800;margin-top:8px}
+  .desc{color:var(--muted);font-size:13px;height:40px;overflow:hidden}
+  .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .price{color:var(--accent);font-weight:900}
+  .seller{color:var(--muted);font-size:12px}
+  .small{font-size:13px;color:var(--muted)}
+  .modal-back{position:fixed;inset:0;background:rgba(1,3,3,.6);display:flex;align-items:center;justify-content:center;z-index:1200}
+  .modal{background:linear-gradient(180deg,#071a16,#061614);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);width:100%;max-width:920px}
+  .flex{display:flex;align-items:center;gap:8px}
+  .badge{background:rgba(19,196,139,0.08);padding:6px 8px;border-radius:999px;color:var(--accent);font-weight:800}
+  footer{max-width:1400px;margin:24px auto;padding:12px 18px;color:var(--muted);font-size:13px}
+  pre{background:#02110f;padding:12px;border-radius:8px;overflow:auto;color:#bfffe4}
+  @media(max-width:1100px){ .container{grid-template-columns:1fr 360px} .left{display:none} }
+  @media(max-width:760px){ .container{grid-template-columns:1fr} .right{display:none} .search{max-width:100%} }
+</style>
 </head>
 <body>
-  <header>
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">MO</div>
-        <div>
-          <h1>Marketplace One</h1>
-          <small>Dark Premium — Verde</small>
-        </div>
-      </div>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">MO</div>
+      <div><h1>Marketplace One — MEGA</h1><div class="small">Dark · Verde · All-in-One</div></div>
+    </div>
 
-      <div class="searchWrap">
-        <div style="position:relative;width:100%">
-          <div class="search" role="search">
-            <button class="iconBtn" aria-hidden>🔍</button>
-            <input id="q" placeholder="Busque produtos, vendedores, categorias..." autocomplete="off" />
-            <select id="sort" style="background:transparent;border:0;color:var(--muted);outline:0;margin-left:8px">
-              <option value="new">Mais recentes</option>
-              <option value="price-asc">Menor preço</option>
-              <option value="price-desc">Maior preço</option>
-              <option value="popular">Mais populares</option>
-            </select>
-          </div>
-          <div id="suggestions" class="suggestions" style="display:none"></div>
-        </div>
-      </div>
+    <div class="searchWrap">
+      <div class="search" role="search"><button class="small">🔎</button><input id="q" placeholder="Pesquisar produtos, posts, usuários... (pressione /)" /><select id="sort" style="border:0;background:transparent;color:var(--muted)"><option value="new">Mais recentes</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option><option value="popular">Mais populares</option></select></div>
+    </div>
 
-      <div class="actions">
-        <button id="btnWishlist" class="iconBtn" title="Favoritos">♡</button>
-        <button id="btnSellerDashboard" class="btn ghost">Painel</button>
-        <button id="btnAuth" class="btn">Entrar</button>
+    <div class="actions">
+      <button id="btnNewPost" class="btn ghost">+ Post</button>
+      <button id="btnAuth" class="btn">Entrar</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <!-- LEFT: perfil / categorias / filtros -->
+  <aside class="panel left">
+    <div id="userProfile" style="display:flex;gap:12px;align-items:center">
+      <div style="width:68px;height:68px;border-radius:12px;background:linear-gradient(90deg,#02382b,#054f3a);display:flex;align-items:center;justify-content:center;font-weight:900">GZ</div>
+      <div>
+        <div id="profileName" style="font-weight:900">Visitante</div>
+        <div id="profileEmail" class="small">Não logado</div>
+        <div style="margin-top:8px"><button id="btnEditProfile" class="btn ghost">Editar perfil</button></div>
       </div>
     </div>
-  </header>
 
-  <div class="wrap">
-    <aside class="leftPanel">
+    <hr style="border:0;height:1px;background:rgba(255,255,255,.02);margin:12px 0"/>
+
+    <div>
+      <div class="small" style="font-weight:900;margin-bottom:8px">Categorias</div>
+      <div id="categories"></div>
+    </div>
+
+    <hr style="border:0;height:1px;background:rgba(255,255,255,.02);margin:12px 0"/>
+
+    <div>
+      <div class="small" style="font-weight:900;margin-bottom:8px">Filtros</div>
+      <div style="display:flex;gap:8px"><input id="minPrice" placeholder="R$ min"/><input id="maxPrice" placeholder="R$ max"/></div>
+      <div style="margin-top:8px"><button id="btnApplyFilters" class="btn">Aplicar</button> <button id="btnClearFilters" class="btn ghost">Limpar</button></div>
+    </div>
+
+    <hr style="border:0;height:1px;background:rgba(255,255,255,.02);margin:12px 0"/>
+
+    <div>
+      <div class="small" style="font-weight:900;margin-bottom:8px">Atalhos</div>
+      <div style="display:flex;flex-direction:column;gap:8px"><button id="btnMyListings" class="btn ghost">Meus anúncios</button><button id="btnMyOrders" class="btn ghost">Pedidos</button><button id="btnAdmin" class="btn ghost">Painel Admin</button></div>
+    </div>
+  </aside>
+
+  <!-- CENTER: feed / marketplace -->
+  <section>
+    <div style="display:flex;justify-content:space-between;align-items:end">
       <div>
-        <div class="sectionTitle">Navegação</div>
-        <div class="accordion">
-          <details open>
-            <summary>Categorias</summary>
-            <div id="categories"></div>
-          </details>
-        </div>
-
-        <div class="sectionTitle">Filtros</div>
-        <div style="display:flex;gap:8px;margin-top:6px">
-          <input id="minPrice" placeholder="R$ min" type="number" style="padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit" />
-          <input id="maxPrice" placeholder="R$ max" type="number" style="padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:inherit" />
-        </div>
-        <div style="margin-top:10px"><button class="btn" id="btnApplyFilters">Aplicar</button> <button class="btn ghost" id="btnOpenFilters">Abrir filtros</button></div>
-
-        <div style="margin-top:14px">
-          <div class="sectionTitle">Conta</div>
-          <div id="accountBox" class="small">Não logado</div>
-          <div style="margin-top:8px;display:flex;gap:6px"><button id="btnGoogle" class="btn ghost">Google</button><button id="btnEmailAuth" class="btn">Email</button></div>
-        </div>
+        <h2>Feed & Marketplace</h2>
+        <div class="small" id="resultCount"></div>
       </div>
-    </aside>
-
-    <main class="mainPanel">
-      <section>
-        <div style="display:flex;justify-content:space-between;align-items:end">
-          <h2>Produtos</h2>
-          <div class="small" id="resultCount"></div>
-        </div>
-
-        <div id="products" class="grid"></div>
-
-        <div class="pagination" id="pagination"></div>
-      </section>
-
-      <section class="sellerDash" id="sellerSection" style="display:none">
-        <h3>Painel do Vendedor</h3>
-        <div style="display:flex;gap:8px;margin-bottom:8px"><button id="btnNewProduct" class="btn">+ Novo Produto</button><button id="btnMyProducts" class="btn ghost">Meus Produtos</button></div>
-        <div id="sellerContent"></div>
-      </section>
-
-      <!-- product detail moved to popup (quick view) -->
-    </main>
-
-    <aside class="rightPanel" id="rightPanel">
-      <div class="widget">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="small">Bem-vindo</div>
-            <div id="rightUser" style="font-weight:800">Visitante</div>
-          </div>
-          <div class="badge">Vendas</div>
-        </div>
+      <div style="display:flex;gap:8px">
+        <button id="toggleFeedMarket" class="btn ghost">Alternar Feed/Shop</button>
+        <button id="btnReload" class="btn">Atualizar</button>
       </div>
+    </div>
 
-      <div class="widget">
-        <div class="small">Carrinho rápido</div>
-        <div id="miniCart"></div>
-        <div style="margin-top:8px;display:flex;gap:8px"><button class="btn" id="btnOpenCart">Abrir carrinho</button><button class="btn ghost" id="btnWishlistModal">Favoritos</button></div>
-      </div>
+    <div id="feedArea" style="margin-top:12px">
+      <!-- posts & marketplace combined -->
+      <div id="feedList" class="grid"></div>
+    </div>
 
-      <div class="widget">
-        <div class="small">Suporte</div>
-        <div style="margin-top:8px"><button class="btn ghost" id="btnContactSupport">Contato</button> <button class="btn" id="btnReportIssue">Reportar</button></div>
+    <div id="pagination" style="margin-top:12px"></div>
+  </section>
+
+  <!-- RIGHT: cart / chat / notifications -->
+  <aside class="panel right">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong class="small">Carrinho</strong></div>
+      <div><span id="cartCount" class="badge">0</span></div>
+    </div>
+    <div id="miniCart" style="margin-top:8px"></div>
+    <div style="display:flex;gap:8px;margin-top:8px"><button id="btnOpenCart" class="btn">Abrir carrinho</button><button id="btnCheckout" class="btn ghost">Checkout</button></div>
+
+    <hr style="border:0;height:1px;background:rgba(255,255,255,.02);margin:12px 0"/>
+
+    <div><strong class="small">Mensagens</strong><div id="chatPreview" style="margin-top:8px"></div><div style="margin-top:8px"><button id="btnOpenChat" class="btn ghost">Abrir chat</button></div></div>
+
+    <hr style="border:0;height:1px;background:rgba(255,255,255,.02);margin:12px 0"/>
+
+    <div><strong class="small">Notificações</strong><div id="notifications" style="margin-top:8px"></div></div>
+  </aside>
+</main>
+
+<!-- TEMPLATES / MODALS -->
+<template id="tplPostModal">
+  <div class="modal-back"><div class="modal">
+    <h3>Novo Post / Produto</h3>
+    <form id="formPost">
+      <input name="title" placeholder="Título" required style="width:100%;margin-top:6px"/>
+      <textarea name="text" placeholder="Descrição / detalhes" style="width:100%;height:100px;margin-top:6px"></textarea>
+      <div style="display:flex;gap:8px;margin-top:6px"><input name="price" placeholder="Preço (opcional)" type="number"/><input name="category" placeholder="Categoria"/></div>
+      <div style="margin-top:8px"><input type="file" name="images" multiple /></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px"><button type="button" id="cancelPost" class="btn ghost">Cancelar</button><button type="submit" class="btn">Publicar</button></div>
+    </form>
+  </div></div>
+</template>
+
+<template id="tplChatModal">
+  <div class="modal-back"><div class="modal" style="max-width:960px">
+    <h3>Chat</h3>
+    <div style="display:flex;gap:12px">
+      <div style="width:260px">
+        <div id="chatUsers" style="max-height:400px;overflow:auto"></div>
       </div>
-    </aside>
+      <div style="flex:1">
+        <div id="chatWindow" style="height:360px;overflow:auto;border-radius:8px;padding:8px;background:#021615"></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><input id="chatInput" style="flex:1"/><button id="sendChat" class="btn">Enviar</button></div>
+      </div>
+    </div>
+    <div style="text-align:right;margin-top:8px"><button id="closeChat" class="btn ghost">Fechar</button></div>
+  </div></div>
+</template>
+
+<template id="tplProfileEdit">
+  <div class="modal-back"><div class="modal">
+    <h3>Editar Perfil</h3>
+    <form id="formProfile">
+      <input name="displayName" placeholder="Nome" /><input name="bio" placeholder="Bio (curta)" style="margin-top:6px"/><input name="contact" placeholder="Contato (email/wa)"/><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px"><button id="cancelProfile" class="btn ghost" type="button">Cancelar</button><button type="submit" class="btn">Salvar</button></div>
+    </form>
+  </div></div>
+</template>
+
+<!-- SERVER SCRIPTS (templates EMBEDDED) -->
+<section style="max-width:1200px;margin:18px auto;padding:0 18px">
+  <h3 style="color:#bfffe4">Blocos Server-side (copie para arquivos separados):</h3>
+
+  <div class="panel">
+    <strong>1) Node.js — Import Users SCRYPT (import-users-scrypt.js)</strong>
+    <pre>
+/* import-users-scrypt.js
+   Node script to import users hashed with SCRYPT into Firebase Auth (Admin SDK).
+   Usage:
+     npm i firebase-admin
+     node import-users-scrypt.js users.json
+*/
+const admin = require('firebase-admin');
+const fs = require('fs');
+const serviceAccount = require('./serviceAccountKey.json');
+admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+
+const usersFile = process.argv[2];
+if(!usersFile){ console.error('usage: node import-users-scrypt.js users.json'); process.exit(1); }
+
+const raw = fs.readFileSync(usersFile, 'utf8');
+const users = JSON.parse(raw);
+
+// convert base64 keys from your hash_config
+const hash = {
+  algorithm: 'SCRYPT',
+  signerKey: Buffer.from('n66lOBaDgnBQ9hp2hkH/iCL7R3SKerzVO0wXgFdbGY3u0Fa/GlJ/AaYMBPc/HOFwXGwAM49yiX4sHIN9TR9YIg==','base64'),
+  saltSeparator: Buffer.from('Bw==','base64'),
+  rounds: 8,
+  memoryCost: 1 << 14
+};
+
+const firebaseUsers = users.map(u => ({
+  uid: u.uid,
+  email: u.email,
+  displayName: u.displayName,
+  passwordHash: Buffer.from(u.hash, 'base64'),
+  passwordSalt: Buffer.from(u.salt, 'base64')
+}));
+
+admin.auth().importUsers(firebaseUsers, {hash}).then(res => {
+  console.log('Import result:', res);
+}).catch(err => console.error('Import error', err));
+    </pre>
   </div>
 
-  <!-- CART DRAWER (improved hidden by default) -->
-  <div id="cartDrawer" class="cart-drawer" style="display:none"></div>
+  <div class="panel" style="margin-top:12px">
+    <strong>2) Firebase Functions — Stripe Checkout + Order Webhook (functions/index.js)</strong>
+    <pre>
+/* functions/index.js
+   Example Firebase Function for Stripe Checkout + webhook to mark orders.
+   Requires: npm i firebase-admin firebase-functions stripe
+*/
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+admin.initializeApp();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-  <!-- Templates -->
-  <template id="tplQuickView">
-    <div class="modal-back">
-      <div class="modal">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <h3 id="qvTitle">Produto</h3>
-          <div>
-            <button id="qvClose" class="btn ghost">Fechar</button>
-          </div>
-        </div>
-        <div class="cols" style="margin-top:12px">
-          <div>
-            <div id="qvImg" style="height:340px;background:#02130f;border-radius:10px;display:flex;align-items:center;justify-content:center">Imagem</div>
-            <div class="thumbs-mini" id="qvThumbs"></div>
-          </div>
-          <div>
-            <div id="qvSeller" class="small"></div>
-            <div style="margin-top:8px;font-weight:900;color:var(--accent);font-size:20px" id="qvPrice">R$ 0,00</div>
-            <div style="margin-top:8px" id="qvDesc"></div>
-            <div class="tabs" id="qvTabs">
-              <div class="tab active" data-tab="buy">Comprar</div>
-              <div class="tab" data-tab="info">Informações</div>
-              <div class="tab" data-tab="reviews">Reviews</div>
-            </div>
-            <div id="qvTabContent" style="margin-top:12px"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
+exports.createCheckoutSession = functions.https.onCall(async (data, context) => {
+  if(!context.auth) throw new functions.https.HttpsError('unauthenticated','Login required');
+  const items = data.items; // [{title,unit_amount,quantity}]
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types:['card'],
+    mode:'payment',
+    line_items: items.map(i=>({price_data:{currency:'brl',product_data:{name:i.title},unit_amount:Math.round(i.unit_amount*100)},quantity:i.quantity})),
+    success_url: data.success_url,
+    cancel_url: data.cancel_url,
+    metadata:{userId: context.auth.uid}
+  });
+  // create order placeholder in DB
+  const orderRef = admin.database().ref('orders').push();
+  await orderRef.set({userId: context.auth.uid, items, status:'pending', sessionId:session.id, createdAt:Date.now()});
+  return {url: session.url};
+});
 
-  <template id="tplFilters">
-    <div class="modal-back">
-      <div class="modal" style="max-width:560px">
-        <h3>Filtros avançados</h3>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <input id="fMin" placeholder="R$ min" />
-          <input id="fMax" placeholder="R$ max" />
-        </div>
-        <div style="margin-top:8px"><label class="small">Ordenar por</label><select id="fSort"><option value="new">Mais recentes</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option></select></div>
-        <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px"><button id="closeFilters" class="btn ghost">Cancelar</button><button id="applyFiltersModal" class="btn">Aplicar</button></div>
-      </div>
-    </div>
-  </template>
+// webhook endpoint (use Stripe CLI / set endpoint)
+exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('Webhook signature verification failed', err);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  if(event.type === 'checkout.session.completed'){
+    const session = event.data.object;
+    // mark order as paid
+    const orders = await admin.database().ref('orders').orderByChild('sessionId').equalTo(session.id).once('value');
+    orders.forEach(snap => snap.ref.update({status:'paid', paidAt:Date.now()}));
+  }
+  res.json({received:true});
+});
+    </pre>
+  </div>
 
-  <template id="tplWishlist">
-    <div class="modal-back">
-      <div class="modal" style="max-width:560px">
-        <h3>Favoritos</h3>
-        <div id="wlList"></div>
-        <div style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn ghost" id="closeWL">Fechar</button></div>
-      </div>
-    </div>
-  </template>
+  <div class="panel" style="margin-top:12px">
+    <strong>3) GitHub Actions — deploy hosting + functions (workflow)</strong>
+    <pre>
+# .github/workflows/firebase-deploy.yml
+name: Deploy Firebase Hosting + Functions
+on: push
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: node-version:18
+      - run: npm ci
+      - name: Decode service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: echo "$FIREBASE_SERVICE_ACCOUNT" | base64 --decode > ${{ runner.temp }}/serviceAccountKey.json
+      - name: Install firebase tools
+        run: npm install -g firebase-tools
+      - name: Deploy
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/serviceAccountKey.json
+          FIREBASE_PROJECT: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: firebase deploy --project "$FIREBASE_PROJECT" --only hosting,functions
+    </pre>
+  </div>
+</section>
 
-  <template id="tplSupport">
-    <div class="modal-back">
-      <div class="modal" style="max-width:520px">
-        <h3>Contato / Suporte</h3>
-        <form id="supportForm">
-          <input name="name" placeholder="Seu nome" required style="width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)" />
-          <input name="email" placeholder="Email" required style="width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)" />
-          <textarea name="message" placeholder="Mensagem" required style="width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)"></textarea>
-          <div style="margin-top:8px;display:flex;justify-content:flex-end;gap:8px"><button type="button" id="closeSupport" class="btn ghost">Cancelar</button><button type="submit" class="btn">Enviar</button></div>
-        </form>
-      </div>
-    </div>
-  </template>
+<footer>
+  <strong>Instruções rápidas</strong>
+  <ul>
+    <li>Front-end usa Firebase Realtime DB + Storage + Auth. Configure regras de segurança antes de liberar writes públicos.</li>
+    <li>Copie os blocos server-side para arquivos e rode em ambiente seguro (Node.js). Nunca exponha service account no front.</li>
+    <li>SCRYPT: converta base64 para Buffer no Node (ex.: Buffer.from('...','base64')).</li>
+    <li>Quer que eu gere um ZIP com todos os arquivos prontos (index.html + functions + import script + workflow)? Diga “gera zip”.</li>
+  </ul>
+</footer>
 
-  <!-- Firebase compat libs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<!-- Firebase client libs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
-  <script>
-    /***** CONFIGURAÇÃO FIREBASE (cole as suas chaves) *****/
-    const firebaseConfig = {
-      apiKey: "AIzaSyDUextNAsgjKWMBgvZRgpD-ZBMowtyA5g8",
-      authDomain: "mercadoone-256a8.firebaseapp.com",
-      databaseURL: "https://mercadoone-256a8-default-rtdb.firebaseio.com",
-      projectId: "mercadoone-256a8",
-      storageBucket: "mercadoone-256a8.firebasestorage.app",
-      messagingSenderId: "491377689826",
-      appId: "1:491377689826:web:2c5dd9eb5f86b0b424cabb"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
-    const storage = firebase.storage();
+<script>
+/*
+  Mega frontend JS: marketplace + social + chat + admin (client side)
+  Uses:
+    - Realtime DB paths:
+      /products/{id}
+      /posts/{id}
+      /users/{uid}
+      /chats/{chatId}/messages
+      /orders/{id}
+      /notifications/{uid}/{nid}
+      /reports/{id}
+*/
+const firebaseConfig = {
+  apiKey: "AIzaSyDUextNAsgjKWMBgvZRgpD-ZBMowtyA5g8",
+  authDomain: "mercadoone-256a8.firebaseapp.com",
+  databaseURL: "https://mercadoone-256a8-default-rtdb.firebaseio.com",
+  projectId: "mercadoone-256a8",
+  storageBucket: "mercadoone-256a8.firebasestorage.app",
+  messagingSenderId: "491377689826",
+  appId: "1:491377689826:web:2c5dd9eb5f86b0b424cabb"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const storage = firebase.storage();
 
-    const GOOGLE_CLIENT_ID = '491377689826-2cdt9oso75th14msjtlt6veu8k0g1ql6.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = '491377689826-2cdt9oso75th14msjtlt6veu8k0g1ql6.apps.googleusercontent.com';
 
-    // App state
-    let PRODUCTS = {};
-    let CATEGORIES = new Set();
-    let CART = JSON.parse(localStorage.getItem('mo_cart')||'[]');
-    let WISHLIST = JSON.parse(localStorage.getItem('mo_wishlist')||'[]');
-    const PAGE_SIZE = 12; let currentPage = 1; let currentCategory = null;
+// App state
+let USER = null;
+let PRODUCTS = {};
+let POSTS = {};
+let CART = JSON.parse(localStorage.getItem('mo_cart')||'[]');
+let PAGE = 1;
+const PAGE_SIZE = 12;
+let MODE = 'feed'; // 'feed' or 'shop'
 
-    // Utils
-    const $ = id=>document.getElementById(id);
-    function el(tag, cls, html){const d=document.createElement(tag); if(cls) d.className=cls; if(html!==undefined) d.innerHTML=html; return d}
-    function formatPrice(v){return 'R$ '+Number(v).toFixed(2)}
-    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[ch])); }
-    function toast(msg){ const wrap = document.querySelector('.toast-wrap') || (function(){const w = document.createElement('div'); w.className='toast-wrap'; document.body.appendChild(w); return w})(); const t = document.createElement('div'); t.className='toast'; t.textContent=msg; wrap.appendChild(t); setTimeout(()=>t.remove(),3500); }
+// Utils
+const $ = id => document.getElementById(id);
+function el(tag, cls, html){ const d=document.createElement(tag); if(cls) d.className=cls; if(html!==undefined)d.innerHTML=html; return d; }
+function toast(msg){ const t = el('div','',''+msg); t.style.background='#062b23'; t.style.color='#bfffe4'; t.style.padding='8px 12px'; t.style.borderRadius='8px'; t.style.marginTop='8px'; t.style.position='fixed'; t.style.left='18px'; t.style.bottom='18px'; t.style.zIndex=2000; document.body.appendChild(t); setTimeout(()=>t.remove(),3500); }
+function formatPrice(v){ return 'R$ '+Number(v||0).toFixed(2); }
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>\"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":"&#39;"}[ch])); }
 
-    // Auth
-    const btnGoogle = $('btnGoogle'); const btnEmailAuth = $('btnEmailAuth'); const btnAuth = $('btnAuth'); const accountBox = $('accountBox'); const rightUser = $('rightUser');
-    auth.onAuthStateChanged(user=>{ if(user){ accountBox.textContent = user.displayName || user.email; btnAuth.textContent='Sair'; rightUser.textContent = user.displayName || user.email; } else { accountBox.textContent='Não logado'; btnAuth.textContent='Entrar'; rightUser.textContent = 'Visitante'; } });
+// Auth UI
+$('btnAuth').addEventListener('click', ()=> openAuthModal());
+auth.onAuthStateChanged(u=>{
+  USER = u;
+  if(u){
+    $('profileName').textContent = u.displayName || u.email;
+    $('profileEmail').textContent = u.email;
+    $('btnAuth').textContent = 'Sair';
+    loadUserData(u.uid);
+  } else {
+    $('profileName').textContent = 'Visitante';
+    $('profileEmail').textContent = 'Não logado';
+    $('btnAuth').textContent = 'Entrar';
+  }
+});
 
-    btnGoogle.addEventListener('click', async ()=>{ const provider = new firebase.auth.GoogleAuthProvider(); try{ await auth.signInWithPopup(provider); toast('Logado com Google'); }catch(e){alert('Erro Google: '+e.message)} });
-    btnEmailAuth.addEventListener('click', ()=>openEmailAuth()); btnAuth.addEventListener('click', ()=>{ if(auth.currentUser) auth.signOut(); else openEmailAuth(); });
+// open auth modal
+function openAuthModal(){
+  const wrapper = document.createElement('div'); wrapper.className='modal-back'; wrapper.innerHTML = `<div class="modal"><h3>Entrar</h3><div style="display:flex;gap:8px"><button id="gLogin" class="btn ghost">Google</button><button id="eLogin" class="btn">Email</button></div><div style="text-align:right;margin-top:8px"><button id="closeAuth" class="btn ghost">Fechar</button></div></div>`; document.body.appendChild(wrapper);
+  wrapper.querySelector('#closeAuth').onclick = ()=>wrapper.remove();
+  wrapper.querySelector('#gLogin').onclick = async ()=>{ const provider = new firebase.auth.GoogleAuthProvider(); try{ await auth.signInWithPopup(provider); toast('Logado com Google'); wrapper.remove(); } catch(e){ alert('Erro: '+e.message) } };
+  wrapper.querySelector('#eLogin').onclick = ()=>{ wrapper.remove(); openEmailAuthInline(); };
+}
+function openEmailAuthInline(){
+  const wrapper = document.createElement('div'); wrapper.className='modal-back'; wrapper.innerHTML = `<div class="modal"><h3>Email / Senha</h3><input id="aiEmail" placeholder="Email" style="width:100%;margin-top:8px"/><input id="aiPass" type="password" placeholder="Senha" style="width:100%;margin-top:8px"/><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button id="aCancel" class="btn ghost">Cancelar</button><button id="aLogin" class="btn">Entrar</button><button id="aReg" class="btn ghost">Registrar</button></div></div>`; document.body.appendChild(wrapper);
+  wrapper.querySelector('#aCancel').onclick = ()=>wrapper.remove();
+  wrapper.querySelector('#aLogin').onclick = async ()=>{ const e = wrapper.querySelector('#aiEmail').value; const p = wrapper.querySelector('#aiPass').value; try{ await auth.signInWithEmailAndPassword(e,p); toast('Logado'); wrapper.remove(); } catch(er){ alert('Erro login: '+er.message) } };
+  wrapper.querySelector('#aReg').onclick = async ()=>{ const e = wrapper.querySelector('#aiEmail').value; const p = wrapper.querySelector('#aiPass').value; try{ await auth.createUserWithEmailAndPassword(e,p); await auth.currentUser.sendEmailVerification(); toast('Conta criada. Verifique seu email.'); wrapper.remove(); } catch(er){ alert('Erro registrar: '+er.message) } };
+}
 
-    function openEmailAuth(){ const tpl = document.createElement('div'); tpl.innerHTML = `
-      <div class="modal-back"><div class="modal" style="max-width:420px"><h3>Entrar / Registrar</h3>
-      <input id='authEmail' placeholder='Email' style='width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)' />
-      <input id='authPass' placeholder='Senha' type='password' style='width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)' />
-      <div style='display:flex;gap:8px;margin-top:10px;justify-content:flex-end'>
-        <button id='cancelAuth' class='btn ghost'>Cancelar</button>
-        <button id='doLogin' class='btn'>Entrar</button>
-        <button id='doRegister' class='btn ghost'>Registrar</button>
-      </div></div></div>`; document.body.appendChild(tpl); tpl.querySelector('#cancelAuth').onclick = ()=>tpl.remove(); tpl.querySelector('#doLogin').onclick = async ()=>{ const e=tpl.querySelector('#authEmail').value; const p=tpl.querySelector('#authPass').value; try{ await auth.signInWithEmailAndPassword(e,p); toast('Logado'); tpl.remove(); }catch(er){alert('Erro login: '+er.message)} }; tpl.querySelector('#doRegister').onclick = async ()=>{ const e=tpl.querySelector('#authEmail').value; const p=tpl.querySelector('#authPass').value; try{ await auth.createUserWithEmailAndPassword(e,p); await auth.currentUser.sendEmailVerification(); toast('Conta criada. Verifique seu email.'); tpl.remove(); }catch(er){alert('Erro registrar: '+er.message)} } }
+// Load user data (profile)
+async function loadUserData(uid){
+  const snap = await db.ref('users/'+uid).once('value'); const data = snap.val() || {};
+  // merge and show
+  if(data.displayName) $('profileName').textContent = data.displayName;
+  if(data.email) $('profileEmail').textContent = data.email;
+}
 
-    // Load products
-    const productsRef = db.ref('products');
-    productsRef.on('value', snap=>{ PRODUCTS = snap.val() || {}; CATEGORIES = new Set(Object.values(PRODUCTS||{}).map(p=>p.category).filter(Boolean)); renderCategories(); renderProducts(); renderMiniCart(); });
+// Realtime listeners: products, posts, users summary, chats preview
+db.ref('products').on('value', snap=>{
+  PRODUCTS = snap.val()||{};
+  renderFeed();
+  renderCategories();
+});
+db.ref('posts').on('value', snap=>{
+  POSTS = snap.val()||{};
+  renderFeed();
+});
 
-    function renderCategories(){ const container = $('categories'); container.innerHTML=''; const all = el('div','category'+(currentCategory? '':' active'),'Todas'); all.onclick=()=>{currentCategory=null;renderProducts()}; container.appendChild(all); Array.from(CATEGORIES).forEach(cat=>{ const c = el('div','category',cat||'Geral'); if(cat===currentCategory) c.classList.add('active'); c.onclick=()=>{ currentCategory=cat; renderProducts(); }; container.appendChild(c); }); }
+// Render categories
+function renderCategories(){
+  const container = $('categories'); container.innerHTML = '';
+  const cats = new Set();
+  Object.values({...PRODUCTS,...POSTS}).forEach(p=>{ if(p && p.category) cats.add(p.category); });
+  ['Todas', ...Array.from(cats)].forEach(c=>{
+    const elc = el('div','','<div style="display:flex;justify-content:space-between;align-items:center"><div class="small">'+escapeHtml(c)+'</div></div>');
+    elc.style.padding='8px'; elc.style.borderRadius='8px'; elc.style.cursor='pointer';
+    elc.onclick = ()=>{ if(c==='Todas'){ PAGE=1; renderFeed(); } else { PAGE=1; filterByCategory(c); } };
+    container.appendChild(elc);
+  });
+}
 
-    // Search suggestions
-    const qInput = $('q'); const suggestions = $('suggestions'); qInput.addEventListener('input', ()=>{ const v = qInput.value.trim().toLowerCase(); if(!v){ suggestions.style.display='none'; return; } const entries = Object.values(PRODUCTS||{}).slice(0,40).filter(p=> (p.title && p.title.toLowerCase().includes(v)) || (p.description && p.description.toLowerCase().includes(v)) ).slice(0,6); suggestions.innerHTML = ''; entries.forEach(p=>{ const d = document.createElement('div'); d.textContent = p.title; d.onclick = ()=>{ qInput.value = p.title; suggestions.style.display='none'; renderProducts(); }; suggestions.appendChild(d); }); suggestions.style.display = entries.length? 'block':'none'; });
+// Filter by category
+function filterByCategory(cat){
+  // simple filter: set a temporary filtered object for render
+  renderFeed({category:cat});
+}
 
-    // Render products
-    function renderProducts(){ const grid = $('products'); grid.innerHTML=''; const q = (qInput.value||'').toLowerCase(); let arr = Object.entries(PRODUCTS).map(([id,p])=>({id,...p})); if(currentCategory) arr = arr.filter(x=>x.category===currentCategory); if(q) arr = arr.filter(x=>[x.title,x.description,x.sellerName,(x.category||'')].some(f=>f && f.toLowerCase().includes(q))); const sort = $('sort').value; if(sort==='price-asc') arr.sort((a,b)=>a.price-b.price); else if(sort==='price-desc') arr.sort((a,b)=>b.price-a.price); else if(sort==='popular') arr.sort((a,b)=>(b.reviews?Object.keys(b.reviews).length:0)-(a.reviews?Object.keys(a.reviews).length:0)); else arr.sort((a,b)=>b.createdAt-a.createdAt);
-      const total = arr.length; const pages = Math.max(1,Math.ceil(total/PAGE_SIZE)); if(currentPage>pages) currentPage = pages; const start = (currentPage-1)*PAGE_SIZE; arr = arr.slice(start,start+PAGE_SIZE); $('resultCount').textContent = `${total} resultados`;
-      arr.forEach(p=>{ const c = el('div','card'); const t = el('div','thumb'); if(p.imagePaths && p.imagePaths.length){ const img = document.createElement('img'); img.loading='lazy'; img.src = p.imagePaths[0]; t.appendChild(img); } else t.textContent='Sem imagem'; c.appendChild(t); c.appendChild(el('div','title',escapeHtml(p.title))); c.appendChild(el('div','desc',escapeHtml(p.description))); const meta = el('div','meta'); meta.appendChild(el('div','','<div class="price">'+formatPrice(p.price)+'</div><div class="seller">'+escapeHtml(p.sellerName)+'</div>')); const actions = el('div','card-actions'); const btnContact = el('button','btn ghost','Contato'); btnContact.onclick = ()=>openContactSeller(p); const btnView = el('button','btn','Ver'); btnView.onclick = ()=>openQuickView(p.id); const wish = el('button','iconBtn','♡'); wish.onclick = ()=>toggleWishlist(p.id); actions.appendChild(btnContact); actions.appendChild(btnView); actions.appendChild(wish); meta.appendChild(actions); c.appendChild(meta); grid.appendChild(c); });
-      // pagination
-      const pagWrap = $('pagination'); pagWrap.innerHTML=''; for(let i=1;i<=pages;i++){ const b = el('button','pageBtn',i); if(i===currentPage) b.style.opacity=1; b.onclick = (()=>{ return ()=>{ currentPage = i; window.scrollTo({top:0,behavior:'smooth'}); renderProducts(); } })(); pagWrap.appendChild(b); }
+// Render feed (posts + product cards)
+function renderFeed(opts){
+  const feed = $('feedList'); feed.innerHTML = '';
+  const q = ($('q').value||'').toLowerCase();
+  // combine posts and products into an array with types
+  let arr = [];
+  Object.entries(POSTS||{}).forEach(([id,p])=>{ arr.push({id,type:'post',...p}); });
+  Object.entries(PRODUCTS||{}).forEach(([id,p])=>{ arr.push({id,type:'product',...p}); });
+  // apply search
+  if(q) arr = arr.filter(x=> (x.title && x.title.toLowerCase().includes(q)) || (x.text && x.text.toLowerCase().includes(q)) || (x.description && x.description.toLowerCase().includes(q)));
+  // apply opts category
+  if(opts && opts.category) arr = arr.filter(x=> x.category===opts.category);
+  // sort
+  const s = $('sort').value;
+  if(s==='price-asc') arr.sort((a,b)=> (a.price||0)-(b.price||0));
+  else if(s==='price-desc') arr.sort((a,b)=> (b.price||0)-(a.price||0));
+  else if(s==='popular') arr.sort((a,b)=>(b.likes?Object.keys(b.likes).length:0)-(a.likes?Object.keys(a.likes).length:0));
+  else arr.sort((a,b)=> (b.createdAt||0)-(a.createdAt||0));
+  // pagination
+  const total = arr.length; const pages = Math.max(1,Math.ceil(total/PAGE_SIZE));
+  if(PAGE>pages) PAGE=pages;
+  const start = (PAGE-1)*PAGE_SIZE; arr = arr.slice(start,start+PAGE_SIZE);
+  $('resultCount').textContent = `${total} resultados`;
+  // render
+  arr.forEach(item=>{
+    if(item.type==='post'){
+      const card = el('div','card');
+      const head = el('div','','<div style="display:flex;justify-content:space-between;align-items:center"><strong>'+escapeHtml(item.title||'Post')+'</strong><div class="small">'+(new Date(item.createdAt||0)).toLocaleString()+'</div></div>');
+      const txt = el('div','small',escapeHtml(item.text||''));
+      const actions = el('div','',`<div style="display:flex;gap:8px;margin-top:8px"><button class="btn ghost">Curtir</button><button class="btn ghost">Comentar</button><button class="btn ghost">Compartilhar</button></div>`);
+      card.appendChild(head); card.appendChild(txt); card.appendChild(actions);
+      feed.appendChild(card);
+    } else {
+      // product card with image
+      const card = el('div','card');
+      const t = el('div','thumb'); if(item.imagePaths && item.imagePaths.length){ const img = document.createElement('img'); img.src = item.imagePaths[0]; img.loading='lazy'; t.appendChild(img); } else t.textContent='Sem imagem';
+      card.appendChild(t);
+      card.appendChild(el('div','title',escapeHtml(item.title||'Produto')));
+      card.appendChild(el('div','desc',escapeHtml(item.description||item.text||'') ));
+      const meta = el('div','meta'); meta.innerHTML = `<div><div class="small">${escapeHtml(item.sellerName||'Vendedor')}</div><div style="font-weight:900" class="price">${formatPrice(item.price)}</div></div>`;
+      const actions = el('div','','');
+      const viewBtn = el('button','btn','Ver'); viewBtn.onclick = ()=> openProductDetail(item.id);
+      const addBtn = el('button','btn ghost','+ Carrinho'); addBtn.onclick = ()=> { addToCart(item.id); };
+      actions.appendChild(viewBtn); actions.appendChild(addBtn);
+      meta.appendChild(actions);
+      card.appendChild(meta);
+      feed.appendChild(card);
     }
+  });
+  // pagination render
+  const pagWrap = $('pagination'); pagWrap.innerHTML = '';
+  for(let i=1;i<=pages;i++){ const b = el('button','btn ghost',i); if(i===PAGE) b.style.opacity=1; b.onclick = ()=>{ PAGE=i; renderFeed(); }; pagWrap.appendChild(b); }
+}
 
-    // Open quick view modal
-    function openQuickView(id){ const p = PRODUCTS[id]; if(!p) return toast('Produto não encontrado'); const tpl = document.getElementById('tplQuickView').content.cloneNode(true); document.body.appendChild(tpl); const modal = document.querySelector('.modal-back:last-child'); modal.querySelector('#qvTitle').textContent = p.title; modal.querySelector('#qvPrice').textContent = formatPrice(p.price); modal.querySelector('#qvDesc').textContent = p.description; modal.querySelector('#qvSeller').textContent = 'Vendido por: '+(p.sellerName||p.seller);
-      const qvImg = modal.querySelector('#qvImg'); qvImg.innerHTML=''; if(p.imagePaths && p.imagePaths.length){ const img = document.createElement('img'); img.src = p.imagePaths[0]; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover'; qvImg.appendChild(img); }
-      const thumbs = modal.querySelector('#qvThumbs'); thumbs.innerHTML=''; if(p.imagePaths) p.imagePaths.forEach(url=>{ const im = document.createElement('img'); im.src = url; im.onclick = ()=>{ qvImg.innerHTML=''; const ii = document.createElement('img'); ii.src = url; ii.style.width='100%'; ii.style.height='100%'; ii.style.objectFit='cover'; qvImg.appendChild(ii); }; thumbs.appendChild(im); });
-      // tabs
-      const tabs = modal.querySelectorAll('.tab'); const tabContent = modal.querySelector('#qvTabContent'); tabs.forEach(t=> t.onclick = ()=>{ tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active'); const which = t.dataset.tab; if(which==='buy'){ tabContent.innerHTML = `<div style="display:flex;gap:8px"><button id='qvAddCart' class='btn'>Adicionar ao carrinho</button><button id='qvBuyNow' class='btn ghost'>Comprar agora</button></div>`; modal.querySelector('#qvAddCart').onclick = ()=>{ addToCart(id); toast('Adicionado ao carrinho'); }; modal.querySelector('#qvBuyNow').onclick = ()=>{ addToCart(id); toast('Iniciando checkout... (simulado)'); }; } else if(which==='info'){ tabContent.innerHTML = `<div class='small'>Categoria: ${escapeHtml(p.category||'Geral')}<br>Publicado: ${new Date(p.createdAt).toLocaleString()}</div>`; } else { // reviews
-            tabContent.innerHTML = '<div id="qvReviews">'; const reviews = p.reviews || {}; if(Object.keys(reviews).length===0) tabContent.innerHTML = '<div class="small">Sem avaliações</div>'; else{ const html = Object.values(reviews).map(r => `<div style="margin-bottom:8px"><strong>${escapeHtml(r.userName||'Anon')}</strong> <span class="small">(${r.rating}/5)</span><div class="small">${escapeHtml(r.text)}</div></div>`).join(''); tabContent.innerHTML = html; }
-          } });
-      // default tab
-      modal.querySelector('.tab[data-tab="buy"]').click();
-      modal.querySelector('#qvClose').onclick = ()=>{ document.querySelectorAll('.modal-back:last-child').forEach(x=>x.remove()); };
+// open product detail
+function openProductDetail(id){
+  const p = PRODUCTS[id];
+  if(!p) return alert('Produto não encontrado');
+  const modal = document.createElement('div'); modal.className='modal-back';
+  const box = document.createElement('div'); box.className='modal';
+  box.innerHTML = `<div style="display:flex;gap:12px"><div style="flex:1"><div style="height:360px;border-radius:8px;background:#021615;display:flex;align-items:center;justify-content:center">${p.imagePaths && p.imagePaths[0] ? '<img src="'+p.imagePaths[0]+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px"/>' : 'Sem imagem'}</div></div><div style="flex:1"><h3>${escapeHtml(p.title)}</h3><div class="small">Vendido por: ${escapeHtml(p.sellerName||p.seller)}</div><div style="font-weight:900;color:var(--accent);margin-top:6px">${formatPrice(p.price)}</div><p class="small" style="margin-top:8px">${escapeHtml(p.description)}</p><div style="display:flex;gap:8px;margin-top:12px"><button id="pdAdd" class="btn">Adicionar ao carrinho</button><button id="pdContact" class="btn ghost">Contato</button><button id="pdBuy" class="btn">Comprar agora</button></div></div></div><div style="text-align:right;margin-top:12px"><button id="pdClose" class="btn ghost">Fechar</button></div>`;
+  modal.appendChild(box); document.body.appendChild(modal);
+  box.querySelector('#pdAdd').onclick = ()=>{ addToCart(id); modal.remove(); };
+  box.querySelector('#pdContact').onclick = ()=>{ alert('Contato do vendedor: '+(p.sellerContact||'Não informado')); };
+  box.querySelector('#pdBuy').onclick = ()=>{ addToCart(id); modal.remove(); toast('Iniciando checkout (simulado). Use Cloud Function para Stripe.'); };
+  box.querySelector('#pdClose').onclick = ()=>modal.remove();
+}
+
+// CRUD posts & products
+$('btnNewPost').onclick = ()=>{ if(!auth.currentUser) return alert('Faça login'); const tpl = document.getElementById('tplPostModal').content.cloneNode(true); document.body.appendChild(tpl); const back = document.querySelector('.modal-back:last-child'); back.querySelector('#cancelPost').onclick = ()=>back.remove(); back.querySelector('#formPost').onsubmit = async (ev)=>{ ev.preventDefault(); const fd = new FormData(ev.target); const title = fd.get('title'); const text = fd.get('text'); const price = Number(fd.get('price')||0); const cat = fd.get('category')||'Geral'; const files = ev.target.querySelector('input[type=file]').files; const id = db.ref().child('posts').push().key; const data = { title, text, price, category: cat, createdAt: Date.now(), authorId: auth.currentUser.uid, authorName: auth.currentUser.displayName||auth.currentUser.email }; if(files && files.length){ data.imagePaths=[]; for(let i=0;i<files.length;i++){ const f = files[i]; const path = `posts/${id}/${Date.now()}_${f.name.replace(/\s/g,'_')}`; const ref = storage.ref(path); await ref.put(f); const url = await ref.getDownloadURL(); data.imagePaths.push(url); } } await db.ref('posts/'+id).set(data); toast('Post publicado'); back.remove(); } };
+
+// CART functions
+function saveCart(){ localStorage.setItem('mo_cart', JSON.stringify(CART)); renderMiniCart(); }
+function addToCart(productId){ const p = PRODUCTS[productId]; if(!p) return toast('Produto indisponível'); const found = CART.find(x=>x.id===productId); if(found) found.qty++; else CART.push({id:productId,qty:1,title:p.title,price:p.price}); saveCart(); toast('Adicionado ao carrinho'); }
+function renderMiniCart(){ const box = $('miniCart'); box.innerHTML=''; let total=0; CART.forEach((it,idx)=>{ const d = el('div','small',`${escapeHtml(it.title)} x${it.qty} — ${formatPrice(it.price*it.qty)}`); box.appendChild(d); total += it.qty*it.price; }); $('cartCount').textContent = CART.length; box.appendChild(el('div','small','Total: '+formatPrice(total))); }
+$('btnOpenCart').onclick = ()=> openFullCart();
+function openFullCart(){ const modal = document.createElement('div'); modal.className='modal-back'; const content = document.createElement('div'); content.className='modal'; content.innerHTML = '<h3>Seu Carrinho</h3><div id="fullCart"></div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px"><button id="closeCart" class="btn ghost">Fechar</button><button id="payCart" class="btn">Pagar</button></div>'; modal.appendChild(content); document.body.appendChild(modal); const list = content.querySelector('#fullCart'); list.innerHTML=''; let total=0; CART.forEach((it,idx)=>{ const r = el('div','','<div style="display:flex;justify-content:space-between"><div>'+escapeHtml(it.title)+' <div class="small">Qtd: '+it.qty+'</div></div><div>'+formatPrice(it.price*it.qty)+'</div></div>'); list.appendChild(r); total += it.qty*it.price; }); list.appendChild(el('div','small','Total: '+formatPrice(total))); content.querySelector('#closeCart').onclick = ()=>modal.remove(); content.querySelector('#payCart').onclick = async ()=>{ if(!auth.currentUser) return alert('Faça login para pagar'); // example of call to cloud function (client side)
+  try{
+    // call firebase function createCheckoutSession
+    const createCheckout = firebase.functions ? firebase.functions().httpsCallable('createCheckoutSession') : null;
+    if(createCheckout){
+      const items = CART.map(it=>({title:it.title,unit_amount:it.price,quantity:it.qty}));
+      const res = await createCheckout({items, success_url: window.location.href, cancel_url: window.location.href});
+      if(res.data && res.data.url) window.location.href = res.data.url;
+    } else {
+      toast('Checkout simulado — configure Cloud Function Stripe.');
     }
+  } catch(e){ console.error(e); alert('Erro checkout: '+e.message) }
+  modal.remove();
+}; }
 
-    // Contact seller popup
-    function openContactSeller(p){ const tpl = document.createElement('div'); tpl.innerHTML = `
-      <div class="modal-back"><div class="modal" style="max-width:520px"><h3>Contato do vendedor</h3>
-        <div class="small" style="margin-top:8px">Vendedor: ${escapeHtml(p.sellerName||p.seller)}</div>
-        <div class="small">Contato: ${escapeHtml(p.sellerContact||'Não informado')}</div>
-        <div style="margin-top:12px"><button id='closeContact' class='btn ghost'>Fechar</button> <button id='copyContact' class='btn'>Copiar</button></div>
-      </div></div>`; document.body.appendChild(tpl); tpl.querySelector('#closeContact').onclick = ()=>tpl.remove(); tpl.querySelector('#copyContact').onclick = ()=>{ navigator.clipboard.writeText(p.sellerContact||'').then(()=>toast('Contato copiado')); } }
+// Chat (basic via Realtime DB)
+$('btnOpenChat').onclick = ()=> openChatModal();
+function openChatModal(){
+  if(!auth.currentUser) return alert('Faça login para usar chat');
+  const tpl = document.getElementById('tplChatModal').content.cloneNode(true); document.body.appendChild(tpl); const back = document.querySelector('.modal-back:last-child');
+  const chatUsers = back.querySelector('#chatUsers'), chatWindow = back.querySelector('#chatWindow'), chatInput = back.querySelector('#chatInput'), sendChat = back.querySelector('#sendChat'), closeChat = back.querySelector('#closeChat');
+  // list of chats for this user
+  db.ref('chats').orderByChild('members/'+auth.currentUser.uid).equalTo(true).on('value', snap=>{
+    const obj = snap.val()||{};
+    chatUsers.innerHTML=''; Object.entries(obj).forEach(([chatId, chat])=>{
+      const btn = el('div','','<div style="display:flex;justify-content:space-between;align-items:center"><div class="small">'+escapeHtml(chat.title||'Chat')+'</div><div class="small">'+(chat.lastMessageAt?new Date(chat.lastMessageAt).toLocaleString():'')+'</div></div>');
+      btn.style.padding='8px'; btn.style.cursor='pointer';
+      btn.onclick = ()=> openChatWindow(chatId);
+      chatUsers.appendChild(btn);
+    });
+  });
+  function openChatWindow(chatId){
+    chatWindow.innerHTML = '';
+    const msgRef = db.ref('chats/'+chatId+'/messages');
+    msgRef.off();
+    msgRef.on('value', snap=>{ const msgs = snap.val()||{}; chatWindow.innerHTML=''; Object.entries(msgs).forEach(([id,m])=>{ const item = el('div','small',`<strong>${escapeHtml(m.senderName||'Anon')}</strong> <div>${escapeHtml(m.text)}</div><div class="small">${new Date(m.createdAt).toLocaleString()}</div>`); item.style.marginBottom='8px'; chatWindow.appendChild(item); }); chatWindow.scrollTop = chatWindow.scrollHeight; });
+    sendChat.onclick = async ()=>{ const text = chatInput.value.trim(); if(!text) return; const mid = db.ref().child('chats/'+chatId+'/messages').push().key; const data = { senderId: auth.currentUser.uid, senderName: auth.currentUser.displayName||auth.currentUser.email, text, createdAt: Date.now() }; await db.ref('chats/'+chatId+'/messages/'+mid).set(data); await db.ref('chats/'+chatId).update({ lastMessageAt: Date.now() }); chatInput.value=''; };
+  }
+  closeChat.onclick = ()=> back.remove();
+}
 
-    /* Reviews modal handled in quick view, also allow write review from product page */
-    function openReviewModal(productId){ const tpl = document.getElementById('modalReview').content.cloneNode(true); document.body.appendChild(tpl); const modal = document.querySelector('.modal-back:last-child'); modal.querySelector('#btnCloseReview').onclick = ()=>{ document.querySelectorAll('.modal-back:last-child').forEach(x=>x.remove()); };
-      modal.querySelector('#formReview').onsubmit = async (ev)=>{ ev.preventDefault(); const fd = new FormData(ev.target); const rating = Number(fd.get('rating')); const text = fd.get('text'); if(!auth.currentUser) return alert('Faça login'); const id = db.ref('products/'+productId+'/reviews').push().key; const data = {rating,text,userId:auth.currentUser.uid,userName:auth.currentUser.displayName||auth.currentUser.email,createdAt:Date.now()}; await db.ref('products/'+productId+'/reviews/'+id).set(data); toast('Avaliação enviada'); document.querySelectorAll('.modal-back:last-child').forEach(x=>x.remove()); }; }
+// Admin panel (client-side toggler)
+$('btnAdmin').onclick = ()=>{ if(!auth.currentUser) return alert('Faça login'); // very naive admin guard: check user uid vs list in DB
+  db.ref('admin').once('value').then(snap=>{ const admins = snap.val()||[]; if(admins.indexOf(auth.currentUser.uid)===-1) return alert('Sem permissão admin'); openAdminPanel(); });
+};
+function openAdminPanel(){
+  const modal = document.createElement('div'); modal.className='modal-back';
+  const box = document.createElement('div'); box.className='modal'; box.innerHTML = `<h3>Painel Admin</h3><div style="display:flex;gap:8px"><button id="btnUsers" class="btn">Usuarios</button><button id="btnReports" class="btn ghost">Reports</button><button id="btnClean" class="btn ghost">Limpar Spams</button></div><div id="adminArea" style="margin-top:12px"></div><div style="text-align:right;margin-top:8px"><button id="closeAdmin" class="btn ghost">Fechar</button></div>`;
+  modal.appendChild(box); document.body.appendChild(modal);
+  box.querySelector('#closeAdmin').onclick = ()=>modal.remove();
+  box.querySelector('#btnUsers').onclick = async ()=>{ const area = box.querySelector('#adminArea'); area.innerHTML = '<div class="small">Carregando usuários...</div>'; const users = await db.ref('users').once('value'); const obj = users.val()||{}; area.innerHTML=''; Object.entries(obj).forEach(([uid,u])=>{ const r = el('div','small',`${escapeHtml(u.displayName||u.email)} — ${escapeHtml(u.email||'')} <button class="btn ghost" data-uid="${uid}">Ban</button>`); area.appendChild(r); }); area.querySelectorAll('button[data-uid]').forEach(b=> b.onclick = async ()=>{ const uid = b.getAttribute('data-uid'); if(confirm('Banir usuário?')){ await db.ref('banned/'+uid).set({bannedAt:Date.now()}); toast('Usuário banido (flag)'); } }); };
+  box.querySelector('#btnReports').onclick = async ()=>{ const area = box.querySelector('#adminArea'); const rep = await db.ref('reports').once('value'); const obj = rep.val()||{}; area.innerHTML=''; Object.entries(obj).forEach(([id,r])=>{ const it = el('div','small',`[${new Date(r.createdAt).toLocaleString()}] ${escapeHtml(r.desc)} <button class="btn" data-id="${id}">Resolver</button>`); area.appendChild(it); }); area.querySelectorAll('button[data-id]').forEach(b=> b.onclick = async ()=>{ const id = b.getAttribute('data-id'); await db.ref('reports/'+id).remove(); toast('Report removido'); box.querySelector('#btnReports').click(); }); };
+}
 
-    // CART
-    function saveCart(){ localStorage.setItem('mo_cart',JSON.stringify(CART)); renderMiniCart(); }
-    function addToCart(productId){ const p = PRODUCTS[productId]; if(!p) return toast('Produto indisponível'); const found = CART.find(c=>c.id===productId); if(found) found.qty++; else CART.push({id:productId,qty:1,title:p.title,price:p.price,img:(p.imagePaths&&p.imagePaths[0])||''}); saveCart(); toast('Adicionado ao carrinho'); }
-    function renderMiniCart(){ const box = $('miniCart'); box.innerHTML=''; let total=0; CART.forEach(it=>{ const d = el('div','small',`${escapeHtml(it.title)} x${it.qty} — ${formatPrice(it.price*it.qty)}`); box.appendChild(d); total += it.price*it.qty; }); const cartDrawer = $('cartDrawer'); cartDrawer.innerHTML = `<div style="font-weight:800">Items: ${CART.length}</div><div class='small'>Total: ${formatPrice(total)}</div><div style='margin-top:8px;display:flex;gap:8px'><button id='openFullCart' class='btn'>Ver carrinho</button> <button id='checkoutQuick' class='btn ghost'>Checkout</button></div>`; const of = document.getElementById('openFullCart'); if(of) of.onclick = ()=>openFullCart(); const chk = document.getElementById('checkoutQuick'); if(chk) chk.onclick = ()=>{ if(!auth.currentUser) return alert('Faça login'); toast('Checkout simulado'); } }
+// Reports (user)
+function reportIssue(desc){ const id = db.ref().child('reports').push().key; db.ref('reports/'+id).set({desc,createdAt:Date.now(),user: USER? USER.uid: 'anon'}); toast('Report enviado'); }
 
-    function openFullCart(){ // render a full cart modal
-      const tpl = document.createElement('div'); tpl.innerHTML = `
-        <div class="modal-back"><div class="modal" style="max-width:560px"><h3>Seu Carrinho</h3><div id='fullCart'></div><div style='display:flex;justify-content:flex-end;gap:8px;margin-top:8px'><button id='closeFull' class='btn ghost'>Fechar</button><button id='payFull' class='btn'>Pagar</button></div></div></div>`; document.body.appendChild(tpl);
-      const fc = document.getElementById('fullCart'); fc.innerHTML=''; let total=0; CART.forEach((it,idx)=>{ const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.marginBottom='8px'; row.innerHTML = `<div style='flex:1'>${escapeHtml(it.title)}<div class='small'>${it.qty} x ${formatPrice(it.price)}</div></div><div style='display:flex;gap:6px'><button class='btn ghost' data-idx='${idx}'>-</button><button class='btn' data-idx='${idx}'>+</button></div>`; fc.appendChild(row); total += it.price*it.qty; }); const footer = document.createElement('div'); footer.style.marginTop='8px'; footer.innerHTML = `<div style='font-weight:800'>Total: ${formatPrice(total)}</div>`; fc.appendChild(footer);
-      document.getElementById('closeFull').onclick = ()=>tpl.remove(); document.getElementById('payFull').onclick = ()=>{ if(!auth.currentUser) return alert('Faça login'); toast('Pagamento simulado — integre Stripe/MercadoPago'); };
-      tpl.querySelectorAll('.modal-back .btn').forEach(b=>{ b.addEventListener('click', (ev)=>{ const idx = b.getAttribute('data-idx'); if(idx!==null){ const i = Number(idx); if(b.textContent.trim()==='-'){ if(CART[i].qty>1) CART[i].qty--; else CART.splice(i,1); saveCart(); tpl.remove(); openFullCart(); } else { CART[i].qty++; saveCart(); tpl.remove(); openFullCart(); } } }); });
-    }
+// Init small UI events
+$('btnApplyFilters').onclick = ()=>{ PAGE=1; renderFeed(); };
+$('btnClearFilters').onclick = ()=>{ $('minPrice').value=''; $('maxPrice').value=''; renderFeed(); };
+$('btnReload').onclick = ()=>{ renderFeed(); toast('Atualizado'); };
+$('toggleFeedMarket').onclick = ()=>{ MODE = MODE==='feed'?'shop':'feed'; toast('Modo: '+MODE); renderFeed(); };
 
-    // Wishlist modal
-    function openWishlist(){ const tpl = document.getElementById('tplWishlist').content.cloneNode(true); document.body.appendChild(tpl); const modal = document.querySelector('.modal-back:last-child'); const list = modal.querySelector('#wlList'); list.innerHTML=''; WISHLIST.forEach(id=>{ const p = PRODUCTS[id]; if(p) list.appendChild(el('div','small',`${escapeHtml(p.title)} — ${formatPrice(p.price)} <button class='btn ghost' data-id='${id}'>Remover</button>`)); }); modal.querySelector('#closeWL').onclick = ()=>modal.remove(); modal.querySelectorAll('button[data-id]').forEach(b=> b.onclick = ()=>{ const id = b.getAttribute('data-id'); const i = WISHLIST.indexOf(id); if(i>=0) WISHLIST.splice(i,1); localStorage.setItem('mo_wishlist',JSON.stringify(WISHLIST)); toast('Removido dos favoritos'); modal.remove(); }); }
+// initial render
+renderFeed();
+renderMiniCart();
 
-    function toggleWishlist(id){ const i = WISHLIST.indexOf(id); if(i>=0){ WISHLIST.splice(i,1); toast('Removido dos favoritos'); } else { WISHLIST.push(id); toast('Adicionado aos favoritos'); } localStorage.setItem('mo_wishlist',JSON.stringify(WISHLIST)); }
+// small helper to seed some demo data (only when empty, for testing)
+async function seedDemoData(){
+  const prods = await db.ref('products').once('value'); if(prods.exists()) return;
+  const p1 = { title:'Fone Gamer', description:'Fone com microfone e RGB', price:129.90, category:'Eletrônicos', sellerId:'sys', sellerName:'Loja Oficial', createdAt:Date.now(), imagePaths:[] };
+  const p2 = { title:'Caneca Verde', description:'Caneca térmica 450ml', price:39.9, category:'Casa', sellerId:'sys', sellerName:'Loja Oficial', createdAt:Date.now(), imagePaths:[] };
+  await db.ref('products').push(p1); await db.ref('products').push(p2);
+  const post = { title:'Bem-vindo ao Marketplace', text:'Teste de feed e marketplace juntos.', createdAt:Date.now(), authorId:'sys', authorName:'Sistema' };
+  await db.ref('posts').push(post);
+  toast('Dados demo criados');
+}
+// Uncomment to seed once (only for development)
+// seedDemoData();
 
-    // Seller dashboard and product creation (popups)
-    document.getElementById('btnNewProduct').onclick = ()=>openNewProductModal();
-    function openNewProductModal(){ const tpl = document.getElementById('modalNewProduct').content.cloneNode(true); document.body.appendChild(tpl); const modal = document.querySelector('.modal-back:last-child'); modal.querySelector('#btnCloseNew').onclick = ()=>modal.remove(); modal.querySelector('#formNewProduct').onsubmit = async (ev)=>{ ev.preventDefault(); const fd = new FormData(ev.target); const title = fd.get('title'); const description = fd.get('description'); const price = Number(fd.get('price')||0); const category = fd.get('category')||'Geral'; const files = ev.target.querySelector('input[type=file]').files; if(!auth.currentUser) return alert('Faça login'); const id = db.ref().child('products').push().key; const productData = { title, description, price, category, sellerId:auth.currentUser.uid, sellerName:auth.currentUser.displayName||auth.currentUser.email, sellerContact:auth.currentUser.email, isSold:false, createdAt:Date.now() };
-        if(files && files.length){ productData.imagePaths = []; for(let i=0;i<files.length;i++){ const f=files[i]; const safe = f.name.replace(/\s/g,'_'); const path = `products/${id}/${Date.now()}_${safe}`; const ref = storage.ref(path); await ref.put(f); const url = await ref.getDownloadURL(); productData.imagePaths.push(url); } }
-        await db.ref('products/'+id).set(productData); toast('Produto publicado'); modal.remove(); } }
-
-    // Seller content
-    function renderSellerDashboard(){ if(!auth.currentUser) return alert('Faça login'); const uid = auth.currentUser.uid; const all = Object.entries(PRODUCTS).filter(([id,p])=>p.sellerId===uid); const wrapper = $('sellerContent'); wrapper.innerHTML=''; if(all.length===0) wrapper.textContent = 'Você ainda não tem produtos.'; else{ const table = el('table','table'); const thead = document.createElement('thead'); thead.innerHTML = '<tr><th>Título</th><th>Preço</th><th>Vendido</th><th>Ações</th></tr>'; table.appendChild(thead); const tbody = document.createElement('tbody'); all.forEach(([id,p])=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(p.title)}</td><td>${formatPrice(p.price)}</td><td>${p.isSold? 'Sim':'Não'}</td><td><button class='btn ghost' data-id='${id}' data-action='edit'>Editar</button> <button class='btn' data-id='${id}' data-action='delete'>Excluir</button></td>`; tbody.appendChild(tr); }); table.appendChild(tbody); wrapper.appendChild(table); wrapper.querySelectorAll('button').forEach(b=>{ b.onclick = async ()=>{ const id = b.getAttribute('data-id'); const action = b.getAttribute('data-action'); if(action==='delete'){ if(confirm('Excluir produto?')){ await db.ref('products/'+id).remove(); toast('Removido'); renderSellerDashboard(); } } else { openEditProductModal(id); } } }); }
-    }
-
-    async function openEditProductModal(productId){ const p = PRODUCTS[productId]; if(!p) return toast('Produto não encontrado'); if(!auth.currentUser || auth.currentUser.uid !== p.sellerId) return toast('Sem permissão'); const tpl = document.createElement('div'); tpl.innerHTML = `
-      <div class="modal-back"><div class="modal" style="max-width:520px"><h3>Editar produto</h3>
-      <input id='editTitle' value='${escapeHtml(p.title)}' style='width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)' />
-      <textarea id='editDesc' style='width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)'>${escapeHtml(p.description)}</textarea>
-      <input id='editPrice' value='${p.price}' style='width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03)' />
-      <div style='display:flex;gap:8px;margin-top:10px;justify-content:flex-end'><button id='cancelEdit' class='btn ghost'>Cancelar</button><button id='saveEdit' class='btn'>Salvar</button></div>
-      </div></div>`; document.body.appendChild(tpl); tpl.querySelector('#cancelEdit').onclick = ()=>tpl.remove(); tpl.querySelector('#saveEdit').onclick = async ()=>{ const title = tpl.querySelector('#editTitle').value; const desc = tpl.querySelector('#editDesc').value; const price = Number(tpl.querySelector('#editPrice').value||0); if(!title||!desc||price<=0) return alert('Preencha campos válidos'); await db.ref('products/'+productId).update({ title, description:desc, price }); toast('Atualizado'); tpl.remove(); } }
-
-    // Filters modal
-    document.getElementById('btnOpenFilters').onclick = ()=>{ const tpl = document.getElementById('tplFilters').content.cloneNode(true); document.body.appendChild(tpl); const modal = document.querySelector('.modal-back:last-child'); modal.querySelector('#closeFilters').onclick = ()=>modal.remove(); modal.querySelector('#applyFiltersModal').onclick = ()=>{ const min = Number(modal.querySelector('#fMin').value)||0; const max = Number(modal.querySelector('#fMax').value)||Infinity; currentPage = 1; const prev = PRODUCTS; PRODUCTS = Object.fromEntries(Object.entries(prev).filter(([id,p])=>p.price>=min && p.price<=max)); renderProducts(); PRODUCTS = prev; modal.remove(); }; }
-
-    // Wishlist modal
-    document.getElementById('btnWishlist').onclick = ()=>openWishlist(); document.getElementById('btnWishlistModal').onclick = ()=>openWishlist();
-
-    // Support
-    document.getElementById('btnContactSupport').onclick = ()=>{ const tpl = document.getElementById('tplSupport').content.cloneNode(true); document.body.appendChild(tpl); const modal = document.querySelector('.modal-back:last-child'); modal.querySelector('#closeSupport').onclick = ()=>modal.remove(); modal.querySelector('#supportForm').onsubmit = async (ev)=>{ ev.preventDefault(); const fd = new FormData(ev.target); // in real app send to support channel
-      toast('Mensagem enviada ao suporte (simulado)'); modal.remove(); } }
-
-    // Report issue (quick)
-    document.getElementById('btnReportIssue').onclick = async ()=>{ const reason = prompt('Descreva o problema:'); if(reason){ const id = db.ref().child('reports').push().key; awaitSafe(db.ref('reports/'+id).set({reason,createdAt:Date.now(),user: auth.currentUser? auth.currentUser.uid: 'anon'})); toast('Obrigado. Report enviado (simulado)'); } }
-
-    // small helper for awaiting with catch
-    async function awaitSafe(p){ try{ await p; }catch(e){ console.error(e); } }
-
-    // Open cart drawer
-    document.getElementById('btnOpenCart').onclick = ()=>{ const cd = $('cartDrawer'); cd.style.display = cd.style.display === 'none' ? 'block' : 'none'; renderMiniCart(); }
-
-    // Wishlist persistence
-    if(!Array.isArray(WISHLIST)) WISHLIST = [];
-
-    // initial render
-    renderProducts(); renderMiniCart();
-
-    // NOTE: hash_config / SCRYPT comment: this is for server-side import only, can't be used client-side.
-
-  </script>
+</script>
 </body>
 </html>
